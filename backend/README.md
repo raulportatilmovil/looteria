@@ -1,103 +1,49 @@
 # Looteria Backend
 
-API REST desarrollada con **Spring Boot 3.2** + **Java 17** + **MySQL** + **JPA/Hibernate**
+API REST desarrollada con Spring Boot + Java + MySQL.
 
-## 📁 Estructura
+## Tecnologías
+- Spring Boot 3.2
+- Java 17
+- MySQL 8.0
+- JPA/Hibernate
 
-```
-backend/
-├── src/
-│   ├── main/
-│   │   ├── java/com/looteria/
-│   │   │   ├── controller/          # REST Controllers
-│   │   │   ├── service/             # Lógica de negocio
-│   │   │   ├── repository/          # Acceso a datos (JPA)
-│   │   │   ├── entity/              # Modelos JPA (Entidades)
-│   │   │   ├── config/              # Configuración
-│   │   │   └── LooteriaApplication.java
-│   │   └── resources/
-│   │       ├── application.properties
-│   │       └── static/
-│   └── test/
-├── database.sql                     # Script de inicialización
-├── pom.xml                          # Dependencias Maven
-├── mvnw / mvnw.cmd                 # Maven Wrapper
-└── .gitignore
-```
-
-## 🚀 Inicio Rápido
-
-### Requisitos
+## Requisitos
 - Java 17+
 - Maven 3.6+
-- MySQL 5.7+ ejecutándose
+- MySQL 5.7+
 
-### Pasos
+## Quick Start
 
-1. **Crear base de datos**
+### 1. Base de Datos
 ```bash
 mysql -u root -p < database.sql
 ```
 
-2. **Compilar**
-```bash
-mvn clean compile
-```
-
-3. **Ejecutar**
+### 2. Compilar y Ejecutar
 ```bash
 mvn spring-boot:run
 ```
 
-API disponible en: `http://localhost:8080`
+API disponible en: `http://localhost:8081`
 
-## 🛠️ Tecnologías
-
-| Nombre | Versión |
-|--------|---------|
-| Spring Boot | 3.2.0 |
-| Java | 17 |
-| MySQL Connector | 8.0.33 |
-| JPA/Hibernate | Auto |
-| Lombok | Auto |
-| Maven | 3.6+ |
-
-## 📊 Configuración Base de Datos
-
-**Archivo**: `src/main/resources/application.properties`
-
+## Configuración (application.properties)
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/looteria
 spring.datasource.username=root
 spring.datasource.password=
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+server.port=8081
 spring.jpa.hibernate.ddl-auto=update
-server.port=8080
 ```
 
-## 📝 Estructura de Carpetas Fuente
-
-### Controller
-Maneja las peticiones HTTP y respuestas REST.
+## Estructura
 ```
-/controller
-├── ArticuloController.java
-├── UsuarioController.java
-├── IntercambioController.java
-└── ...
+src/main/java/com/looteria/
+├── controller/      # REST Controllers
+├── service/         # Lógica de negocio
+├── repository/      # Acceso a datos (JPA)
+└── entity/          # Modelos JPA
 ```
-
-### Service
-Contiene la lógica de negocio.
-```
-/service
-├── ArticuloService.java
-├── UsuarioService.java
-├── IntercambioService.java
-└── ...
-```
-
-### Repository
 Interfaz con la base de datos (JPA).
 ```
 /repository
@@ -143,28 +89,13 @@ GET    /api/intercambios           Listar intercambios
 POST   /api/intercambios           Crear intercambio
 ```
 
-## 🐛 Solución de Problemas
-
-### Puerto 8080 en uso
-```bash
-# Cambiar puerto en application.properties
-server.port=8081
-```
-
-### Conexión BD fallida
-```
-1. Verifica que MySQL está corriendo
-2. Usuario/contraseña correctos
-3. BD 'looteria' existe
-```
-
 ## 📚 Dependencias Principales
 
-- **spring-boot-starter-web**: Framework web
-- **spring-boot-starter-data-jpa**: ORM
-- **mysql-connector-j**: Driver MySQL
-- **lombok**: Reduce boilerplate
-- **spring-boot-starter-validation**: Validación
+- **spring-boot-starter-web**
+- **spring-boot-starter-data-jpa**
+- **mysql-connector-j**
+- **lombok**
+- **spring-boot-starter-validation**
 
 ## 🔄 Build & Deploy
 
