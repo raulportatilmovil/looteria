@@ -7,9 +7,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "productos")
-@Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -49,5 +46,79 @@ public class Product {
     @PrePersist
     protected void onCreate() {
         fechaCreacion = LocalDateTime.now();
+    }
+
+    // Getters
+    public Long getIdProducto() {
+        return idProducto;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public Category getPlataforma() {
+        return plataforma;
+    }
+
+    public Category getTipoArticulo() {
+        return tipoArticulo;
+    }
+
+    public Category getFranquicia() {
+        return franquicia;
+    }
+
+    public LocalDateTime getFechaLanzamiento() {
+        return fechaLanzamiento;
+    }
+
+    public BigDecimal getValorEstimado() {
+        return valorEstimado;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    // Setters
+    public void setIdProducto(Long idProducto) {
+        this.idProducto = idProducto;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public void setPlataforma(Category plataforma) {
+        this.plataforma = plataforma;
+    }
+
+    public void setTipoArticulo(Category tipoArticulo) {
+        this.tipoArticulo = tipoArticulo;
+    }
+
+    public void setFranquicia(Category franquicia) {
+        this.franquicia = franquicia;
+    }
+
+    public void setFechaLanzamiento(LocalDateTime fechaLanzamiento) {
+        this.fechaLanzamiento = fechaLanzamiento;
+    }
+
+    public void setValorEstimado(BigDecimal valorEstimado) {
+        this.valorEstimado = valorEstimado;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
     }
 }
