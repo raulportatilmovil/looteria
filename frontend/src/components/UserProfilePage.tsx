@@ -376,7 +376,7 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
                         </div>
                         <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
                           <span className="text-2xl font-bold text-primary">{listing.precio}€</span>
-                          <span>{new Date(listing.fechaCreacion.split(' ')[0]).toLocaleDateString('es-ES')}</span>
+                          <span>{new Date(listing.fechaCreacion.split('T')[0]).toLocaleDateString('es-ES')}</span>
                         </div>
                         <p className="text-gray-600 text-sm mb-4">{listing.descripcionEstado}</p>
                         <div className="flex gap-2">
