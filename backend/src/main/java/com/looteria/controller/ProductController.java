@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/productos")
-@CrossOrigin(origins = {"http://localhost:3000", "https://looteria.switzerlandnorth.cloudapp.azure.com"})
+@RequestMapping("/productos")
+@CrossOrigin(origins = "*")
 public class ProductController {
     
     @Autowired

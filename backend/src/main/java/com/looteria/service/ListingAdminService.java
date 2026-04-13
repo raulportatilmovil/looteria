@@ -1,0 +1,142 @@
+package com.looteria.service;
+
+import com.looteria.dto.ListingDetailDTO;
+import com.looteria.entity.ListingPost;
+import com.looteria.repository.ListingPostRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class ListingAdminService {
+
+    @Autowired
+    private ListingPostRepository listingPostRepository;
+
+    /**
+     * Obtener todas las publicaciones (incluso inactivas) para el admin
+     */
+    public List<ListingDetailDTO> getAllListingsForAdmin() {
+        List<ListingPost> listings = listingPostRepository.findAll();
+        List<ListingDetailDTO> results = new ArrayList<>();
+        for (ListingPost listing : listings) {
+            results.add(convertToDTO(listing));
+        }
+        return results;
+    }
+
+    /**
+     * Obtener publicaciones de un usuario específico
+     */
+    public List<ListingDetailDTO> getListingsByUserId(Long userId) {
+        List<ListingPost> listings = listingPostRepository.findAll();
+        List<ListingDetailDTO> results = new ArrayList<>();
+        for (ListingPost listing : listings) {
+            if (listing.getUsuario() != null && listing.getUsuario().getIdUsuario().equals(userId)) {
+                results.add(convertToDTO(listing));
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Eliminar publicación por ID
+     */
+    public void deleteListing(Long id) {
+        listingPostRepository.deleteById(id);
+    }
+
+    /**
+     * Obtener publicación por ID como DTO
+     */
+    public ListingDetailDTO getListingById(Long id) {
+        return listingPostRepository.findById(id)
+                .map(this::convertToDTO)
+                .orElse(null);
+    }
+
+    /**
+     * Convertir entidad ListingPost a DTO - versión simplificada
+     */
+    private ListingDetailDTO convertToDTO(ListingPost listing) {
+        ListingDetailDTO dto = new ListingDetailDTO();
+        
+        try {
+            dto.setIdPublicacion(listing.getIdPublicacion());
+            
+            if (listing.getUsuario() != null) {
+                dto.setIdUsuario(listing.getUsuario().getIdUsuario());
+                dto.setNombreUsuario(listing.getUsuario().getNombreUsuario());
+                dto.setEmail(listing.getUsuario().getEmail());
+            } else {
+                dto.setIdUsuario(null);
+                dto.setNombreUsuario("Desconocido");
+                dto.setEmail("Desconocido");
+            }
+            
+            if (listing.getProducto() != null) {
+                dto.setTitulo(listing.getProducto().getTitulo());
+                dto.setDescripcion(listing.getProducto().getDescripcion());
+                dto.setPlataforma(listing.getProducto().getPlataforma() != null ? 
+                        listing.getProducto().getPlataforma().getNombre() : "Desconocida");
+                dto.setTipoArticulo(listing.getProducto().getTipoArticulo() != null ? 
+                        listing.getProducto().getTipoArticulo().getNombre() : "No especificado");
+                dto.setFranquicia(listing.getProducto().getFranquicia() != null ? 
+                        listing.getProducto().getFranquicia().getNombre() : "No especificada");
+            } else {
+                dto.setTitulo("Desconocido");
+                dto.setDescripcion("");
+                dto.setPlataforma("Desconocida");
+                dto.setTipoArticulo("No especificado");
+                dto.setFranquicia("No especificada");
+            }
+            
+            if (listing.getTipoTransaccion() != null) {
+                dto.setTipoTransaccion(listing.getTipoTransaccion().toString());
+            } else {
+                dto.setTipoTransaccion("DESCONOCIDO");
+            }
+            
+            dto.setPrecio(listing.getPrecio());
+            
+            if (listing.getEstadoArticulo() != null) {
+                dto.setEstadoArticulo(listing.getEstadoArticulo().getNombre());
+            } else {
+                dto.setEstadoArticulo("No especificado");
+            }
+            
+            dto.setDescripcionEstado(listing.getDescripcionEstado());
+            
+            if (listing.getIdioma() != null) {
+                dto.setIdioma(listing.getIdioma().getNombre());
+            } else {
+                dto.setIdioma("Desconocido");
+            }
+            
+            if (listing.getRegion() != null) {
+                dto.setRegion(listing.getRegion().getNombre());
+            } else {
+                dto.setRegion("Desconocida");
+            }
+            
+            dto.setFechaCreacion(listing.getFechaCreacion());
+            
+            if (listing.getEstadoPublicacion() != null) {
+                dto.setEstadoPublicacion(listing.getEstadoPublicacion().toString());
+            } else {
+                dto.setEstadoPublicacion("DESCONOCIDO");
+            }
+            
+            dto.setEnvio(listing.getEnvio());
+        } catch (Exception e) {
+            // Log silenciosamente si hay errores
+            e.printStackTrace();
+        }
+        
+        return dto;
+    }
+}

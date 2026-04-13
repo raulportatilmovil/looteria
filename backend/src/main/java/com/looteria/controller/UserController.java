@@ -38,9 +38,11 @@ public class UserController {
             User usuarioCreado = userService.registerUser(email, nombreUsuario, contrasena);
             
             Map<String, Object> response = new HashMap<>();
-            response.put("status", "ÉXITO");
-            response.put("message", "Usuario registrado correctamente");
-            response.put("usuario", usuarioCreado);
+            response.put("idUsuario", usuarioCreado.getIdUsuario());
+            response.put("email", usuarioCreado.getEmail());
+            response.put("nombreUsuario", usuarioCreado.getNombreUsuario());
+            response.put("rol", usuarioCreado.getRol().toString());
+            response.put("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." + usuarioCreado.getIdUsuario() + "." + System.currentTimeMillis());
             
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
@@ -64,9 +66,11 @@ public class UserController {
             User usuario = userService.loginUser(email, contrasena);
             
             Map<String, Object> response = new HashMap<>();
-            response.put("status", "ÉXITO");
-            response.put("message", "Login exitoso");
-            response.put("usuario", usuario);
+            response.put("idUsuario", usuario.getIdUsuario());
+            response.put("email", usuario.getEmail());
+            response.put("nombreUsuario", usuario.getNombreUsuario());
+            response.put("rol", usuario.getRol().toString());
+            response.put("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." + usuario.getIdUsuario() + "." + System.currentTimeMillis());
             
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {

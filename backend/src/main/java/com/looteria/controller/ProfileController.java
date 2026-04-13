@@ -1,0 +1,163 @@
+package com.looteria.controller;
+
+import com.looteria.dto.ListingDetailDTO;
+import com.looteria.entity.User;
+import com.looteria.service.UserService;
+import com.looteria.service.ListingAdminService;
+import com.looteria.entity.ListingPost;
+import com.looteria.repository.ListingPostRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/perfil")
+@CrossOrigin(origins = "*")
+public class ProfileController {
+    
+    @Autowired
+    private UserService userService;
+    
+    @Autowired
+    private ListingAdminService listingAdminService;
+    
+    @Autowired
+    private ListingPostRepository listingPostRepository;
+    
+    /**
+     * GET /perfil/datos/{userId} - Obtener datos del perfil del usuario
+     */
+    @GetMapping("/datos/{userId}")
+    public ResponseEntity<Map<String, Object>> getProfileData(@PathVariable Long userId) {
+        try {
+            User usuario = userService.getUserById(userId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("idUsuario", usuario.getIdUsuario());
+            response.put("email", usuario.getEmail());
+            response.put("nombreUsuario", usuario.getNombreUsuario());
+            response.put("ubicacion", usuario.getUbicacion());
+            response.put("rol", usuario.getRol().toString());
+            response.put("puntosAcumulados", usuario.getPuntosAcumulados());
+            response.put("reputacionMedia", usuario.getReputacionMedia());
+            response.put("verificadoIdentidad", usuario.getVerificadoIdentidad());
+            response.put("fechaRegistro", usuario.getFechaRegistro());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+    }
+    
+    /**
+     * PUT /perfil/actualizar/{userId} - Actualizar perfil del usuario
+     */
+    @PutMapping("/actualizar/{userId}")
+    public ResponseEntity<Map<String, Object>> updateProfile(@PathVariable Long userId, @RequestBody Map<String, String> request) {
+        try {
+            User usuario = userService.getUserById(userId);
+            
+            if (request.containsKey("nombreUsuario") && !request.get("nombreUsuario").isEmpty()) {
+                usuario.setNombreUsuario(request.get("nombreUsuario"));
+            }
+            if (request.containsKey("ubicacion") && !request.get("ubicacion").isEmpty()) {
+                usuario.setUbicacion(request.get("ubicacion"));
+            }
+            
+            User updated = userService.updateUser(usuario);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "ÉXITO");
+            response.put("mensaje", "Perfil actualizado correctamente");
+            response.put("idUsuario", updated.getIdUsuario());
+            response.put("nombreUsuario", updated.getNombreUsuario());
+            response.put("ubicacion", updated.getUbicacion());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("status", "ERROR");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+    }
+    
+    /**
+     * GET /perfil/mis-publicaciones/{userId} - Obtener publicaciones del usuario
+     */
+    @GetMapping("/mis-publicaciones/{userId}")
+    public ResponseEntity<List<ListingDetailDTO>> getUserListings(@PathVariable Long userId) {
+        try {
+            List<ListingDetailDTO> listings = listingAdminService.getListingsByUserId(userId);
+            return ResponseEntity.ok(listings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+    
+    /**
+     * DELETE /perfil/publicaciones/{listingId} - Eliminar publicación del usuario
+     */
+    @DeleteMapping("/publicaciones/{listingId}")
+    public ResponseEntity<Map<String, Object>> deleteListing(@PathVariable Long listingId) {
+        try {
+            listingAdminService.deleteListing(listingId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "ÉXITO");
+            response.put("mensaje", "Publicación eliminada correctamente");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("status", "ERROR");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+    }
+    
+    /**
+     * PUT /perfil/publicaciones/{listingId} - Actualizar estado de publicación
+     */
+    @PutMapping("/publicaciones/{listingId}")
+    public ResponseEntity<Map<String, Object>> updateListing(@PathVariable Long listingId, @RequestBody Map<String, String> request) {
+        try {
+            Optional<ListingPost> optListing = listingPostRepository.findById(listingId);
+            if (optListing.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("status", "ERROR");
+                error.put("message", "Publicación no encontrada");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
+            
+            ListingPost listing = optListing.get();
+            
+            if (request.containsKey("descripcionEstado") && !request.get("descripcionEstado").isEmpty()) {
+                listing.setDescripcionEstado(request.get("descripcionEstado"));
+            }
+            if (request.containsKey("precio")) {
+                listing.setPrecio(new java.math.BigDecimal(request.get("precio")));
+            }
+            if (request.containsKey("estadoPublicacion") && !request.get("estadoPublicacion").isEmpty()) {
+                listing.setEstadoPublicacion(
+                    com.looteria.entity.ListingPost.PublicationStatus.valueOf(request.get("estadoPublicacion"))
+                );
+            }
+            
+            ListingPost updated = listingPostRepository.save(listing);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "ÉXITO");
+            response.put("mensaje", "Publicación actualizada correctamente");
+            response.put("idPublicacion", updated.getIdPublicacion());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("status", "ERROR");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+    }
+}

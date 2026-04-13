@@ -1,23 +1,29 @@
-import { Search, Menu, X, ShoppingCart, User, Plus, PackageOpen } from "lucide-react";
+import { Search, Menu, X, LogOut, PackageOpen } from "lucide-react";
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { useAuth } from "../context/AuthContext";
 
 interface NavbarProps {
   onNavigate: (page: string) => void;
   currentPage: string;
   userRole?: "guest" | "registered" | "admin";
-  onRoleChange?: (role: "guest" | "registered" | "admin") => void;
 }
 
-export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChange }: NavbarProps) {
+export function Navbar({ onNavigate, currentPage }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, logout } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       onNavigate("explore");
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    onNavigate("home");
+    setIsMenuOpen(false);
   };
 
   return (
@@ -73,7 +79,7 @@ export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChan
             >
               Catálogo
             </button>
-            {userRole !== "guest" && (
+            {user && user?.rol !== "ADMIN" && (
               <button
                 onClick={() => onNavigate("profile")}
                 className={`px-4 py-2 rounded-lg transition-colors ${
@@ -85,7 +91,7 @@ export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChan
                 Mis publicaciones
               </button>
             )}
-            {userRole === "admin" && (
+            {user?.rol === "ADMIN" && (
               <button
                 onClick={() => onNavigate("admin")}
                 className={`px-4 py-2 rounded-lg transition-colors ${
@@ -94,47 +100,34 @@ export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChan
                     : "text-gray-700 hover:text-primary hover:bg-gray-50"
                 }`}
               >
-                Admin
+                ⚙️ Admin
               </button>
             )}
           </div>
 
-          {/* Desktop Buttons */}
+          {/* Right Side - User Info / Login */}
           <div className="hidden md:flex items-center space-x-3 flex-shrink-0">
-            {userRole !== "guest" && (
+            {user ? (
               <>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{user.nombreUsuario}</p>
+                  <p className="text-xs text-gray-500">
+                    {user.rol === 'ADMIN' ? '👨‍💼 Admin' : '👤 Usuario'}
+                  </p>
+                </div>
                 <button
-                  onClick={() => onNavigate("create-listing")}
-                  className="p-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
-                  title="Crear publicación"
+                  onClick={handleLogout}
+                  className="p-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                  title="Cerrar sesión"
                 >
-                  <Plus className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => onNavigate("cart")}
-                  className="p-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors relative"
-                  title="Carrito"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 bg-destructive text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                    2
-                  </span>
-                </button>
-                <button
-                  onClick={() => onNavigate("profile")}
-                  className="p-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
-                  title="Perfil"
-                >
-                  <User className="w-5 h-5" />
+                  <LogOut size={20} />
                 </button>
               </>
-            )}
-            
-            {userRole === "guest" ? (
+            ) : (
               <>
                 <button
                   onClick={() => onNavigate("login")}
-                  className="px-4 py-2 text-gray-700 hover:text-primary transition-colors"
+                  className="px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Iniciar sesión
                 </button>
@@ -145,21 +138,7 @@ export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChan
                   Registrarse
                 </button>
               </>
-            ) : null}
-
-            {/* Role Selector (for demo purposes) */}
-            <div className="border-l border-gray-200 pl-3">
-              <Select value={userRole} onValueChange={(value) => onRoleChange?.(value as "guest" | "registered" | "admin")}>
-                <SelectTrigger className="w-32 h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="guest">Invitado</SelectItem>
-                  <SelectItem value="registered">Registrado</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -208,7 +187,7 @@ export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChan
               >
                 Catálogo
               </button>
-              {userRole !== "guest" && (
+              {user && (
                 <>
                   <button
                     onClick={() => {
@@ -230,7 +209,7 @@ export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChan
                   </button>
                 </>
               )}
-              {userRole === "admin" && (
+              {user?.rol === "ADMIN" && (
                 <button
                   onClick={() => {
                     onNavigate("admin");
@@ -244,21 +223,20 @@ export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChan
             </div>
 
             <div className="pt-2 border-t border-gray-200">
-              <div className="mb-3">
-                <label className="block text-sm text-gray-600 mb-2">Rol de usuario:</label>
-                <Select value={userRole} onValueChange={(value) => onRoleChange?.(value as "guest" | "registered" | "admin")}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="guest">Invitado</SelectItem>
-                    <SelectItem value="registered">Registrado</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {userRole === "guest" ? (
+              {user ? (
+                <>
+                  <p className="text-sm font-medium text-gray-900 px-4 py-2">
+                    {user.nombreUsuario}
+                  </p>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"
+                  >
+                    <LogOut size={18} />
+                    Cerrar sesión
+                  </button>
+                </>
+              ) : (
                 <>
                   <button
                     onClick={() => {
@@ -274,12 +252,12 @@ export function Navbar({ onNavigate, currentPage, userRole = "guest", onRoleChan
                       onNavigate("login");
                       setIsMenuOpen(false);
                     }}
-                    className="block w-full px-4 py-2 rounded-lg bg-primary text-white text-center"
+                    className="block w-full text-left px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg"
                   >
                     Registrarse
                   </button>
                 </>
-              ) : null}
+              )}
             </div>
           </div>
         </div>

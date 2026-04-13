@@ -3,6 +3,7 @@ import { Mail, Lock, User, MapPin, Eye, EyeOff, PackageOpen, AlertCircle, CheckC
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import authService from "../api/services/authService.ts";
+import { useAuth } from "../context/AuthContext";
 
 interface LoginRegisterPageProps {
   onNavigate: (page: string) => void;
@@ -11,6 +12,7 @@ interface LoginRegisterPageProps {
 export function LoginRegisterPage({ onNavigate }: LoginRegisterPageProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -32,9 +34,11 @@ export function LoginRegisterPage({ onNavigate }: LoginRegisterPageProps) {
     try {
       if (isLogin) {
         // LOGIN
-        await authService.login(formData.email, formData.password);
+        const result = await authService.login(formData.email, formData.password);
+        // Guardar en contexto
+        login(result, result.token || "");
         setMessage({ type: 'success', text: 'Login exitoso. Redirigiendo...' });
-        setTimeout(() => onNavigate('explore'), 1500);
+        setTimeout(() => onNavigate('home'), 1500);
       } else {
         // REGISTRO
         if (formData.password !== formData.confirmPassword) {
@@ -49,9 +53,11 @@ export function LoginRegisterPage({ onNavigate }: LoginRegisterPageProps) {
           return;
         }
 
-        await authService.register(formData.email, formData.username, formData.password);
+        const result = await authService.register(formData.email, formData.username, formData.password);
+        // Guardar en contexto después del registro
+        login(result, result.token || "");
         setMessage({ type: 'success', text: '¡Cuenta creada exitosamente! Redirigiendo...' });
-        setTimeout(() => onNavigate('explore'), 1500);
+        setTimeout(() => onNavigate('home'), 1500);
       }
     } catch (error: any) {
       setMessage({ type: 'error', text: error.response?.data?.message || 'Error de conexión con el servidor' });
