@@ -71,9 +71,9 @@ export default function AdminPanel() {
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+            className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70 font-medium text-lg"
           >
-            <RefreshCw size={18} />
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
             Actualizar
           </button>
         </div>
