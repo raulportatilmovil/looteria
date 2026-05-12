@@ -1,15 +1,11 @@
 package com.looteria.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "productos")
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Product {
     
     @Id
@@ -30,10 +26,6 @@ public class Product {
     @JoinColumn(name = "tipo_articulo_id")
     private Category tipoArticulo;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "franquicia_id")
-    private Category franquicia;
-    
     @Column(name = "fecha_lanzamiento")
     private LocalDateTime fechaLanzamiento;
     
@@ -42,6 +34,22 @@ public class Product {
     
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
+
+    public Product() {
+    }
+
+    public Product(Long idProducto, String titulo, String descripcion, Category plataforma, 
+                   Category tipoArticulo, LocalDateTime fechaLanzamiento, 
+                   BigDecimal valorEstimado, LocalDateTime fechaCreacion) {
+        this.idProducto = idProducto;
+        this.titulo = titulo;
+        this.descripcion = descripcion;
+        this.plataforma = plataforma;
+        this.tipoArticulo = tipoArticulo;
+        this.fechaLanzamiento = fechaLanzamiento;
+        this.valorEstimado = valorEstimado;
+        this.fechaCreacion = fechaCreacion;
+    }
     
     @PrePersist
     protected void onCreate() {
@@ -69,9 +77,6 @@ public class Product {
         return tipoArticulo;
     }
 
-    public Category getFranquicia() {
-        return franquicia;
-    }
 
     public LocalDateTime getFechaLanzamiento() {
         return fechaLanzamiento;
@@ -104,10 +109,6 @@ public class Product {
 
     public void setTipoArticulo(Category tipoArticulo) {
         this.tipoArticulo = tipoArticulo;
-    }
-
-    public void setFranquicia(Category franquicia) {
-        this.franquicia = franquicia;
     }
 
     public void setFechaLanzamiento(LocalDateTime fechaLanzamiento) {

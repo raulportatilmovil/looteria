@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, MapPin, Star, User, Calendar, ShoppingCart, Repeat, ShieldCheck, Heart, Package, Truck } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { Footer } from "./Footer";
 import { Game } from "./GameCard";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Textarea } from "./ui/textarea";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
+import profileService from "../api/services/profileService";
 
 interface GameDetailPageProps {
   gameId: string;
@@ -28,63 +30,76 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [exchangeMessage, setExchangeMessage] = useState("");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [gameData, setGameData] = useState<any>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [newReview, setNewReview] = useState({ calificacion: 5, comentario: "" });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const { user } = useAuth();
 
-  const [reviews] = useState<Review[]>([
-    {
-      id: "1",
-      userName: "Carlos M.",
-      rating: 5,
-      comment: "Excelente estado, tal como se describe. La transacción fue muy rápida y segura.",
-      date: "2 días atrás",
-    },
-    {
-      id: "2",
-      userName: "María G.",
-      rating: 4,
-      comment: "Buen producto, aunque tardó un poco en llegar. El artículo está en perfecto estado.",
-      date: "1 semana atrás",
-    },
-    {
-      id: "3",
-      userName: "Pedro R.",
-      rating: 5,
-      comment: "Todo perfecto. El vendedor muy atento y el producto en perfecto estado.",
-      date: "2 semanas atrás",
-    },
-  ]);
+  const loadListingData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const listingId = parseInt(gameId, 10);
+      
+      const listingData = await profileService.getListingDetail(listingId);
+      
+      const reviewsData = await profileService.getListingReviews(listingId);
+      
+      setGameData({
+        id: gameId,
+        title: listingData.nombreProducto || listingData.producto || "Producto",
+        description: listingData.descripcion || "",
+        price: listingData.precio || 0,
+        console: listingData.plataforma || "",
+        condition: listingData.estado || "No especificado",
+        platform: listingData.plataforma || "",
+        franchise: listingData.tipoArticulo || "",
+        releaseDate: listingData.fechaCreacion ? new Date(listingData.fechaCreacion).toLocaleDateString('es-ES') : "",
+        estimatedValue: listingData.precio ? Math.round(listingData.precio * 1.2) : 0,
+        itemType: listingData.tipoArticulo || "Artículo",
+        language: listingData.idioma || "Desconocido",
+        shipping: true,
+        shippingCost: 5,
+        location: listingData.ubicacion || "España",
+        rating: listingData.usuarioReputacion || 0,
+        transactionType: listingData.tipoTransaccion === "both" ? "both" : "sale",
+        seller: {
+          name: listingData.usuarioNombre || "Vendedor",
+          reputation: listingData.usuarioReputacion || 0,
+          totalSales: listingData.usuarioVentas || 0,
+          verified: true,
+        },
+        imagenes: listingData.imagenes || [],
+      });
+      
+      const transformedReviews = reviewsData.map((review: any) => ({
+        id: review.idResena?.toString() || Math.random().toString(),
+        userName: review.usuarioRevisor || "Usuario",
+        rating: review.calificacion || 0,
+        comment: review.comentario || "",
+        date: review.fecha ? new Date(review.fecha).toLocaleDateString('es-ES') : "",
+      }));
+      
+      setReviews(transformedReviews);
+      setLoading(false);
+    } catch (err: any) {
+      console.error("Error loading listing:", err);
+      setError(err.message || "Error cargando la publicación");
+      setLoading(false);
+      toast.error("Error al cargar la publicación");
+    }
+  }, [gameId]);
 
-  const images = [
-    "https://images.unsplash.com/photo-1593024579758-6221e85efbe6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwbGF5c3RhdGlvbiUyMGdhbWV8ZW58MXx8fHwxNzYyMjgwMDExfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    "https://images.unsplash.com/photo-1655976796204-308e6f3deaa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnYW1pbmclMjBjb25zb2xlJTIwY29udHJvbGxlcnxlbnwxfHx8fDE3NjIyMzc0OTN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    "https://images.unsplash.com/photo-1641564341083-161e6aa17a8b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnYW1lciUyMHBsYXlpbmd8ZW58MXx8fHwxNzYyMjgwMDEzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-  ];
-
-  const gameData = {
-    id: gameId,
-    title: "The Last of Us Part II",
-    description: "Juego de acción-aventura exclusivo de PlayStation que narra una historia emocionante de supervivencia y venganza. El juego incluye la caja original, disco en perfecto estado y manual completo. Sin código de descarga usado.",
-    price: 45,
-    console: "PlayStation 5",
-    condition: "Como nuevo",
-    platform: "PlayStation 5",
-    franchise: "The Last of Us",
-    releaseDate: "19/06/2020",
-    estimatedValue: 55,
-    itemType: "Videojuego",
-    language: "Español",
-    region: "PAL Europa",
-    shipping: true,
-    shippingCost: 5,
-    location: "Madrid",
-    rating: 4.8,
-    transactionType: "both", // sale, exchange, both
-    seller: {
-      name: "Juan Pérez",
-      reputation: 4.9,
-      totalSales: 127,
-      verified: true,
-    },
-  };
+  useEffect(() => {
+    if (gameId) {
+      loadListingData();
+    }
+  }, [gameId, loadListingData]);
 
   const handleBuy = () => {
     if (userRole === "guest") {
@@ -102,6 +117,30 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
       return;
     }
     setShowExchangeModal(true);
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.idUsuario) {
+      toast.error("Debes iniciar sesión para dejar una reseña");
+      onNavigate("login");
+      return;
+    }
+    if (!newReview.comentario.trim()) {
+      toast.error("Por favor escribe un comentario");
+      return;
+    }
+    try {
+      setSubmittingReview(true);
+      await profileService.addReview(parseInt(gameId, 10), user.idUsuario, newReview.calificacion, newReview.comentario);
+      await loadListingData();
+      setNewReview({ calificacion: 5, comentario: "" });
+      toast.success("Reseña añadida correctamente");
+    } catch (err: any) {
+      toast.error("Error al añadir reseña: " + (err.message || "Error desconocido"));
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   const handleRequestVerification = () => {
@@ -131,6 +170,31 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando publicación...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error: {error}</p>
+            <Button onClick={() => onNavigate("explore")} className="bg-primary">
+              Volver al catálogo
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Content - Show only when data is loaded */}
+      {!loading && !error && gameData && (
+        <>
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -151,13 +215,13 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
           <div className="space-y-4">
             <div className="bg-white rounded-xl overflow-hidden border border-gray-200">
               <img
-                src={images[selectedImageIndex]}
+                src={gameData.imagenes && gameData.imagenes.length > 0 ? gameData.imagenes[selectedImageIndex] : "https://via.placeholder.com/500x500?text=Imagen+no+disponible"}
                 alt={gameData.title}
                 className="w-full h-[500px] object-cover"
               />
             </div>
             <div className="grid grid-cols-3 gap-3">
-              {images.map((img, index) => (
+              {(gameData.imagenes && gameData.imagenes.length > 0 ? gameData.imagenes : []).map((img: string, index: number) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
@@ -253,23 +317,27 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
               {/* Seller Info */}
               <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Información del vendedor</h3>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center font-bold">
-                    {gameData.seller.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{gameData.seller.name}</span>
-                      {gameData.seller.verified && (
-                        <ShieldCheck className="w-4 h-4 text-green-600" />
-                      )}
+                {gameData.seller ? (
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center font-bold">
+                      {gameData.seller.name?.charAt(0) || "?"}
                     </div>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                      <span className="text-gray-600">{gameData.seller.reputation} • {gameData.seller.totalSales} ventas</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">{gameData.seller.name || "Vendedor"}</span>
+                        {gameData.seller.verified && (
+                          <ShieldCheck className="w-4 h-4 text-green-600" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        <span className="text-gray-600">{gameData.seller.reputation || 0} • {gameData.seller.totalSales || 0} ventas</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <p className="text-gray-600">Información del vendedor no disponible</p>
+                )}
               </div>
             </div>
           </div>
@@ -293,10 +361,6 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
                   <span className="font-medium text-gray-900">{gameData.platform}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b border-gray-100">
-                  <span className="text-gray-600">Franquicia:</span>
-                  <span className="font-medium text-gray-900">{gameData.franchise}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-gray-100">
                   <span className="text-gray-600">Fecha lanzamiento:</span>
                   <span className="font-medium text-gray-900">{gameData.releaseDate}</span>
                 </div>
@@ -307,10 +371,6 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
                 <div className="flex justify-between py-3 border-b border-gray-100">
                   <span className="text-gray-600">Idioma:</span>
                   <span className="font-medium text-gray-900">{gameData.language}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-gray-100">
-                  <span className="text-gray-600">Región:</span>
-                  <span className="font-medium text-gray-900">{gameData.region}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b border-gray-100">
                   <span className="text-gray-600">Envío:</span>
@@ -324,6 +384,47 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
             {/* Reviews */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Reseñas ({reviews.length})</h2>
+
+              {user && (
+                <form onSubmit={handleSubmitReview} className="mb-8 space-y-4">
+                  <h3 className="font-bold text-gray-900">Deja tu reseña</h3>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Calificación</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <button
+                          key={rating}
+                          type="button"
+                          onClick={() => setNewReview({ ...newReview, calificacion: rating })}
+                          className={`p-2 ${newReview.calificacion >= rating ? "text-yellow-400" : "text-gray-300"}`}
+                        >
+                          <Star className="w-6 h-6 fill-current" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tu comentario</label>
+                    <textarea
+                      value={newReview.comentario}
+                      onChange={(e) => setNewReview({ ...newReview, comentario: e.target.value })}
+                      placeholder="Cuéntanos tu experiencia..."
+                      rows={4}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <Button type="submit" disabled={submittingReview} className="bg-primary hover:bg-primary/90">
+                    {submittingReview ? "Enviando..." : "Enviar reseña"}
+                  </Button>
+                </form>
+              )}
+
+              {!user && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+                  <p className="text-blue-900 text-sm"><strong>Inicia sesión</strong> para dejar una reseña</p>
+                </div>
+              )}
+
               <div className="space-y-6">
                 {reviews.map((review) => (
                   <div key={review.id} className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
@@ -536,6 +637,8 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
       </Dialog>
 
       <Footer onNavigate={onNavigate} />
+        </>
+      )}
     </div>
   );
 }

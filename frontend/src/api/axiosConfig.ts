@@ -8,10 +8,7 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // DESARROLLO: withCredentials: false (permite CORS con wildcard *)
   withCredentials: false,
-  // PRODUCCIÓN (AZURE): withCredentials: true (para JWT tokens seguros)
-  // withCredentials: true,
 });
 
 export default axiosInstance;

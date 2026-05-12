@@ -20,10 +20,10 @@ public class AdminController {
     @Autowired
     private ListingAdminService listingAdminService;
 
-    // ===== USERS ENDPOINTS =====
+    // ENDPOINTS USUARIOS
 
     /**
-     * GET /admin/usuarios - Obtener todos los usuarios
+     * Obtener todos los usuarios
      */
     @GetMapping("/usuarios")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -32,7 +32,7 @@ public class AdminController {
     }
 
     /**
-     * GET /admin/usuarios/{id} - Obtener usuario por ID
+     * Obtener usuario por ID
      */
     @GetMapping("/usuarios/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
@@ -44,7 +44,7 @@ public class AdminController {
     }
 
     /**
-     * DELETE /admin/usuarios/{id} - Eliminar usuario
+     * Eliminar usuario
      */
     @DeleteMapping("/usuarios/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
@@ -56,10 +56,10 @@ public class AdminController {
         }
     }
 
-    // ===== LISTINGS ENDPOINTS =====
+    // ENDPOINTS PUBLICACIONES
 
     /**
-     * GET /admin/publicaciones - Obtener todas las publicaciones
+     * Obtener todas las publicaciones
      */
     @GetMapping("/publicaciones")
     public ResponseEntity<List<ListingDetailDTO>> getAllListings() {

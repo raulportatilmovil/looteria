@@ -16,7 +16,6 @@ export const authService = {
     });
     
     const data = response.data;
-    // Guardar token y usuario 
     if (data.token) {
       localStorage.setItem('authToken', data.token);
     }
@@ -33,7 +32,6 @@ export const authService = {
     });
     
     const data = response.data;
-    // Guardar automáticamente después de registro
     if (data.token) {
       localStorage.setItem('authToken', data.token);
     }

@@ -58,13 +58,6 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Lombok -->
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
-
 		<!-- Jakarta Persistence API -->
 		<dependency>
 			<groupId>jakarta.persistence</groupId>

@@ -8,17 +8,19 @@ import { UserProfilePage } from "./components/UserProfilePage";
 import { ExchangesPage } from "./components/ExchangesPage";
 import { FAQPage } from "./components/FAQPage";
 import AdminPanel from "./components/AdminPanel";
+import { CreateListingPage } from "./components/CreateListingPage";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-type Page = "home" | "login" | "game" | "explore" | "profile" | "exchanges" | "faq" | "admin" | "create-listing" | "cart" | "tracking";
+type Page = "home" | "login" | "game" | "explore" | "profile" | "exchanges" | "faq" | "admin" | "create-listing" | "listing-detail" | "cart" | "tracking";
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [selectedGameId, setSelectedGameId] = useState<string>("1");
+  const [selectedListingId, setSelectedListingId] = useState<string>("1");
   const { user } = useAuth();
 
-  const handleNavigate = (page: string, gameId?: string) => {
+  const handleNavigate = (page: string, idParam?: string) => {
   
     if (user?.rol === 'ADMIN' && page === 'profile') {
       setCurrentPage('admin' as Page);
@@ -31,10 +33,18 @@ function AppContent() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    
     setCurrentPage(page as Page);
-    if (gameId) {
-      setSelectedGameId(gameId);
+    
+    // Asignar el ID al campo correcto según la página
+    if (idParam) {
+      if (page === 'game') {
+        setSelectedGameId(idParam);
+      } else if (page === 'listing-detail') {
+        setSelectedListingId(idParam);
+      }
     }
+    
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -69,14 +79,15 @@ function AppContent() {
 
       {currentPage === "home" && <HomePage onNavigate={handleNavigate} />}
       {currentPage === "login" && <LoginRegisterPage onNavigate={handleNavigate} />}
-      {currentPage === "game" && (
-        <GameDetailPage gameId={selectedGameId} onNavigate={handleNavigate} userRole={getNavbarRole() as "guest" | "registered" | "admin"} />
+      {(currentPage === "game" || currentPage === "listing-detail") && (
+        <GameDetailPage gameId={currentPage === "game" ? selectedGameId : selectedListingId} onNavigate={handleNavigate} userRole={getNavbarRole() as "guest" | "registered" | "admin"} />
       )}
       {currentPage === "explore" && <ExplorePage onNavigate={handleNavigate} />}
       {currentPage === "admin" && <AdminPanel />}
       {currentPage === "profile" && <UserProfilePage onNavigate={handleNavigate} userRole={getNavbarRole() as "guest" | "registered" | "admin"} />}
       {currentPage === "exchanges" && <ExchangesPage onNavigate={handleNavigate} />}
       {currentPage === "faq" && <FAQPage onNavigate={handleNavigate} />}
+      {currentPage === "create-listing" && <CreateListingPage onNavigate={handleNavigate} />}
     </div>
   );
 }

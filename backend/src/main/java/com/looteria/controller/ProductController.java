@@ -75,21 +75,11 @@ public class ProductController {
     }
     
     /**
-     * GET /api/productos/franquicia/{franquiciaId} - Obtener productos por franquicia
-     */
-    @GetMapping("/franquicia/{franquiciaId}")
-    public ResponseEntity<?> getProductsByFranquicia(@PathVariable Long franquiciaId) {
-        Iterable<Product> products = productService.getProductsByFranquicia(franquiciaId);
-        return ResponseEntity.ok(products);
-    }
-    
-    /**
      * POST /api/productos - Crear nuevo producto
      */
     @PostMapping
     public ResponseEntity<?> createProduct(@RequestBody Product product) {
         try {
-            // Validaciones básicas
             if (product.getTitulo() == null || product.getTitulo().trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("El título del producto es requerido");

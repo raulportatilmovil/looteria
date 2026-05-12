@@ -21,7 +21,6 @@ export interface ListingDetailDTO {
   descripcion: string;
   plataforma: string;
   tipoArticulo: string;
-  franquicia: string;
   tipoTransaccion: string;
   precio: number;
   estadoArticulo: string;

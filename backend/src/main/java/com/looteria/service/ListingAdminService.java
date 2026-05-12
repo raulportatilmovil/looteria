@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Service
 @Transactional
@@ -18,7 +18,7 @@ public class ListingAdminService {
     private ListingPostRepository listingPostRepository;
 
     /**
-     * Obtener todas las publicaciones (incluso inactivas) para el admin
+     * Obtener todas las publicaciones 
      */
     public List<ListingDetailDTO> getAllListingsForAdmin() {
         List<ListingPost> listings = listingPostRepository.findAll();
@@ -60,7 +60,7 @@ public class ListingAdminService {
     }
 
     /**
-     * Convertir entidad ListingPost a DTO - versión simplificada
+     * Convertir entidad ListingPost a DTO
      */
     private ListingDetailDTO convertToDTO(ListingPost listing) {
         ListingDetailDTO dto = new ListingDetailDTO();
@@ -85,14 +85,12 @@ public class ListingAdminService {
                         listing.getProducto().getPlataforma().getNombre() : "Desconocida");
                 dto.setTipoArticulo(listing.getProducto().getTipoArticulo() != null ? 
                         listing.getProducto().getTipoArticulo().getNombre() : "No especificado");
-                dto.setFranquicia(listing.getProducto().getFranquicia() != null ? 
-                        listing.getProducto().getFranquicia().getNombre() : "No especificada");
+                dto.setFechaLanzamiento(listing.getProducto().getFechaLanzamiento());
             } else {
                 dto.setTitulo("Desconocido");
                 dto.setDescripcion("");
                 dto.setPlataforma("Desconocida");
                 dto.setTipoArticulo("No especificado");
-                dto.setFranquicia("No especificada");
             }
             
             if (listing.getTipoTransaccion() != null) {

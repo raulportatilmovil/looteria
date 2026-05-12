@@ -13,7 +13,6 @@ export default function AdminPanel() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'user' | 'listing'; id: number } | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Cargar datos iniciales
   useEffect(() => {
     loadData();
   }, []);

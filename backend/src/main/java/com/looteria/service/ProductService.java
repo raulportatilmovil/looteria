@@ -62,13 +62,6 @@ public class ProductService {
     }
     
     /**
-     * Obtener productos por franquicia
-     */
-    public Iterable<Product> getProductsByFranquicia(Long franquiciaId) {
-        return productRepository.findByFranquicia_IdCategoria(franquiciaId);
-    }
-    
-    /**
      * Actualizar producto
      */
     public Product updateProduct(Long id, Product productDetails) {
@@ -88,9 +81,6 @@ public class ProductService {
             }
             if (productDetails.getTipoArticulo() != null) {
                 product.setTipoArticulo(productDetails.getTipoArticulo());
-            }
-            if (productDetails.getFranquicia() != null) {
-                product.setFranquicia(productDetails.getFranquicia());
             }
             if (productDetails.getFechaLanzamiento() != null) {
                 product.setFechaLanzamiento(productDetails.getFechaLanzamiento());

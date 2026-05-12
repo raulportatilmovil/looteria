@@ -2,196 +2,140 @@ package com.looteria.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ListingDetailDTO {
+
+    // Publicación
     private Long idPublicacion;
-    private Long idUsuario;
-    private String nombreUsuario;
-    private String email;
-    private String titulo;
-    private String descripcion;
-    private String plataforma;
-    private String tipoArticulo;
-    private String franquicia;
     private String tipoTransaccion;
     private BigDecimal precio;
-    private String estadoArticulo;
     private String descripcionEstado;
-    private String idioma;
-    private String region;
     private LocalDateTime fechaCreacion;
     private String estadoPublicacion;
     private Boolean envio;
 
+    // Categorías
+    private String estadoArticulo;
+    private String estado;          
+    private String idioma;
+    private String region;
+
+    // Producto
+    private String titulo;
+    private String producto;        
+    private String descripcion;
+    private String especificaciones; 
+    private String plataforma;
+    private String tipoArticulo;
+    private LocalDateTime fechaLanzamiento;
+
+    // Usuario
+    private Long idUsuario;
+    private Long usuarioId;         
+    private String nombreUsuario;
+    private String usuarioNombre;  
+    private String email;
+    private String usuarioEmail;     
+    private String usuarioUbicacion;
+    private BigDecimal usuarioReputacion;
+    private Long usuarioVentas;
+
+    // Imágenes
+    private List<String> imagenes;
+
+    // Para reseñas
+    private Long transaccionId;
+
     public ListingDetailDTO() {
     }
 
-    public ListingDetailDTO(Long idPublicacion, Long idUsuario, String nombreUsuario, String email,
-                           String titulo, String descripcion, String plataforma, String tipoArticulo,
-                           String franquicia, String tipoTransaccion, BigDecimal precio,
-                           String estadoArticulo, String descripcionEstado, String idioma,
-                           String region, LocalDateTime fechaCreacion, String estadoPublicacion, Boolean envio) {
-        this.idPublicacion = idPublicacion;
-        this.idUsuario = idUsuario;
-        this.nombreUsuario = nombreUsuario;
-        this.email = email;
-        this.titulo = titulo;
-        this.descripcion = descripcion;
-        this.plataforma = plataforma;
-        this.tipoArticulo = tipoArticulo;
-        this.franquicia = franquicia;
-        this.tipoTransaccion = tipoTransaccion;
-        this.precio = precio;
-        this.estadoArticulo = estadoArticulo;
-        this.descripcionEstado = descripcionEstado;
-        this.idioma = idioma;
-        this.region = region;
-        this.fechaCreacion = fechaCreacion;
-        this.estadoPublicacion = estadoPublicacion;
-        this.envio = envio;
-    }
+    // ─── Getters y Setters ───────────────────────────────────────────────────────
 
-    public Long getIdPublicacion() {
-        return idPublicacion;
-    }
+    public Long getIdPublicacion() { return idPublicacion; }
+    public void setIdPublicacion(Long idPublicacion) { this.idPublicacion = idPublicacion; }
 
-    public void setIdPublicacion(Long idPublicacion) {
-        this.idPublicacion = idPublicacion;
-    }
+    public String getTipoTransaccion() { return tipoTransaccion; }
+    public void setTipoTransaccion(String tipoTransaccion) { this.tipoTransaccion = tipoTransaccion; }
 
-    public Long getIdUsuario() {
-        return idUsuario;
-    }
+    public BigDecimal getPrecio() { return precio; }
+    public void setPrecio(BigDecimal precio) { this.precio = precio; }
 
-    public void setIdUsuario(Long idUsuario) {
-        this.idUsuario = idUsuario;
-    }
+    public String getDescripcionEstado() { return descripcionEstado; }
+    public void setDescripcionEstado(String descripcionEstado) { this.descripcionEstado = descripcionEstado; }
 
-    public String getNombreUsuario() {
-        return nombreUsuario;
-    }
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 
-    public void setNombreUsuario(String nombreUsuario) {
-        this.nombreUsuario = nombreUsuario;
-    }
+    public String getEstadoPublicacion() { return estadoPublicacion; }
+    public void setEstadoPublicacion(String estadoPublicacion) { this.estadoPublicacion = estadoPublicacion; }
 
-    public String getEmail() {
-        return email;
-    }
+    public Boolean getEnvio() { return envio; }
+    public void setEnvio(Boolean envio) { this.envio = envio; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getEstadoArticulo() { return estadoArticulo; }
+    public void setEstadoArticulo(String estadoArticulo) { this.estadoArticulo = estadoArticulo; }
 
-    public String getTitulo() {
-        return titulo;
-    }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
 
-    public String getDescripcion() {
-        return descripcion;
-    }
+    public String getProducto() { return producto; }
+    public void setProducto(String producto) { this.producto = producto; }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public String getPlataforma() {
-        return plataforma;
-    }
+    public String getEspecificaciones() { return especificaciones; }
+    public void setEspecificaciones(String especificaciones) { this.especificaciones = especificaciones; }
 
-    public void setPlataforma(String plataforma) {
-        this.plataforma = plataforma;
-    }
+    public String getPlataforma() { return plataforma; }
+    public void setPlataforma(String plataforma) { this.plataforma = plataforma; }
 
-    public String getTipoArticulo() {
-        return tipoArticulo;
-    }
+    public String getTipoArticulo() { return tipoArticulo; }
+    public void setTipoArticulo(String tipoArticulo) { this.tipoArticulo = tipoArticulo; }
 
-    public void setTipoArticulo(String tipoArticulo) {
-        this.tipoArticulo = tipoArticulo;
-    }
+    public LocalDateTime getFechaLanzamiento() { return fechaLanzamiento; }
+    public void setFechaLanzamiento(LocalDateTime fechaLanzamiento) { this.fechaLanzamiento = fechaLanzamiento; }
 
-    public String getFranquicia() {
-        return franquicia;
-    }
+    public String getIdioma() { return idioma; }
+    public void setIdioma(String idioma) { this.idioma = idioma; }
 
-    public void setFranquicia(String franquicia) {
-        this.franquicia = franquicia;
-    }
+    public String getRegion() { return region; }
+    public void setRegion(String region) { this.region = region; }
 
-    public String getTipoTransaccion() {
-        return tipoTransaccion;
-    }
+    public Long getIdUsuario() { return idUsuario; }
+    public void setIdUsuario(Long idUsuario) { this.idUsuario = idUsuario; }
 
-    public void setTipoTransaccion(String tipoTransaccion) {
-        this.tipoTransaccion = tipoTransaccion;
-    }
+    public Long getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
 
-    public BigDecimal getPrecio() {
-        return precio;
-    }
+    public String getNombreUsuario() { return nombreUsuario; }
+    public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
 
-    public void setPrecio(BigDecimal precio) {
-        this.precio = precio;
-    }
+    public String getUsuarioNombre() { return usuarioNombre; }
+    public void setUsuarioNombre(String usuarioNombre) { this.usuarioNombre = usuarioNombre; }
 
-    public String getEstadoArticulo() {
-        return estadoArticulo;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setEstadoArticulo(String estadoArticulo) {
-        this.estadoArticulo = estadoArticulo;
-    }
+    public String getUsuarioEmail() { return usuarioEmail; }
+    public void setUsuarioEmail(String usuarioEmail) { this.usuarioEmail = usuarioEmail; }
 
-    public String getDescripcionEstado() {
-        return descripcionEstado;
-    }
+    public String getUsuarioUbicacion() { return usuarioUbicacion; }
+    public void setUsuarioUbicacion(String usuarioUbicacion) { this.usuarioUbicacion = usuarioUbicacion; }
 
-    public void setDescripcionEstado(String descripcionEstado) {
-        this.descripcionEstado = descripcionEstado;
-    }
+    public BigDecimal getUsuarioReputacion() { return usuarioReputacion; }
+    public void setUsuarioReputacion(BigDecimal usuarioReputacion) { this.usuarioReputacion = usuarioReputacion; }
 
-    public String getIdioma() {
-        return idioma;
-    }
+    public Long getUsuarioVentas() { return usuarioVentas; }
+    public void setUsuarioVentas(Long usuarioVentas) { this.usuarioVentas = usuarioVentas; }
 
-    public void setIdioma(String idioma) {
-        this.idioma = idioma;
-    }
+    public List<String> getImagenes() { return imagenes; }
+    public void setImagenes(List<String> imagenes) { this.imagenes = imagenes; }
 
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    public String getEstadoPublicacion() {
-        return estadoPublicacion;
-    }
-
-    public void setEstadoPublicacion(String estadoPublicacion) {
-        this.estadoPublicacion = estadoPublicacion;
-    }
-
-    public Boolean getEnvio() {
-        return envio;
-    }
-
-    public void setEnvio(Boolean envio) {
-        this.envio = envio;
-    }
+    public Long getTransaccionId() { return transaccionId; }
+    public void setTransaccionId(Long transaccionId) { this.transaccionId = transaccionId; }
 }

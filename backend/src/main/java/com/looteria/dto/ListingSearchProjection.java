@@ -7,7 +7,6 @@ public interface ListingSearchProjection {
     String getDescripcion();
     String getPlataformaNombre();
     String getTipoArticuloNombre();
-    String getFranquiciaNombre();
     java.math.BigDecimal getPrecio();
     String getEstadoArticuloNombre();
     String getTipoTransaccion();

@@ -1,14 +1,18 @@
 package com.looteria.controller;
 
 import com.looteria.dto.ListingDetailDTO;
+import com.looteria.dto.ReviewDTO;
 import com.looteria.entity.User;
-import com.looteria.service.UserService;
 import com.looteria.service.ListingAdminService;
+import com.looteria.service.ReviewService;
+import com.looteria.service.UserService;
 import com.looteria.entity.ListingPost;
 import com.looteria.repository.ListingPostRepository;
+import com.looteria.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +32,12 @@ public class ProfileController {
     
     @Autowired
     private ListingPostRepository listingPostRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ReviewService reviewService;
     
     /**
      * GET /perfil/datos/{userId} - Obtener datos del perfil del usuario
@@ -119,10 +129,19 @@ public class ProfileController {
     }
     
     /**
+     * GET /perfil/resenas-recibidas/{userId} - Reseñas recibidas por el usuario
+     */
+    @GetMapping("/resenas-recibidas/{userId}")
+    public ResponseEntity<List<ReviewDTO>> getReceivedReviews(@PathVariable Long userId) {
+        return ResponseEntity.ok(reviewService.getReceivedReviews(userId));
+    }
+
+    /**
      * PUT /perfil/publicaciones/{listingId} - Actualizar estado de publicación
      */
+    @Transactional
     @PutMapping("/publicaciones/{listingId}")
-    public ResponseEntity<Map<String, Object>> updateListing(@PathVariable Long listingId, @RequestBody Map<String, String> request) {
+    public ResponseEntity<?> updateListing(@PathVariable Long listingId, @RequestBody Map<String, String> request) {
         try {
             Optional<ListingPost> optListing = listingPostRepository.findById(listingId);
             if (optListing.isEmpty()) {
@@ -134,29 +153,43 @@ public class ProfileController {
             
             ListingPost listing = optListing.get();
             
-            if (request.containsKey("descripcionEstado") && !request.get("descripcionEstado").isEmpty()) {
+            if (request.containsKey("descripcionEstado")) {
                 listing.setDescripcionEstado(request.get("descripcionEstado"));
             }
-            if (request.containsKey("precio")) {
+            if (request.containsKey("precio") && request.get("precio") != null && !request.get("precio").isEmpty()) {
                 listing.setPrecio(new java.math.BigDecimal(request.get("precio")));
             }
-            if (request.containsKey("estadoPublicacion") && !request.get("estadoPublicacion").isEmpty()) {
+            if (request.containsKey("tipoTransaccion") && request.get("tipoTransaccion") != null && !request.get("tipoTransaccion").isEmpty()) {
+                listing.setTipoTransaccion(
+                    com.looteria.entity.ListingPost.TransactionType.valueOf(request.get("tipoTransaccion"))
+                );
+            }
+            if (request.containsKey("estadoArticulo") && request.get("estadoArticulo") != null && !request.get("estadoArticulo").isEmpty()) {
+                categoryRepository.findFirstByNombreAndTipo(request.get("estadoArticulo"), "ESTADO_ARTICULO")
+                        .ifPresent(listing::setEstadoArticulo);
+            }
+            if (request.containsKey("idioma") && request.get("idioma") != null && !request.get("idioma").isEmpty()) {
+                categoryRepository.findFirstByNombreAndTipo(request.get("idioma"), "IDIOMA")
+                        .ifPresent(listing::setIdioma);
+            }
+            if (request.containsKey("region") && request.get("region") != null && !request.get("region").isEmpty()) {
+                categoryRepository.findFirstByNombreAndTipo(request.get("region"), "REGION")
+                        .ifPresent(listing::setRegion);
+            }
+            if (request.containsKey("estadoPublicacion") && request.get("estadoPublicacion") != null && !request.get("estadoPublicacion").isEmpty()) {
                 listing.setEstadoPublicacion(
                     com.looteria.entity.ListingPost.PublicationStatus.valueOf(request.get("estadoPublicacion"))
                 );
             }
             
-            ListingPost updated = listingPostRepository.save(listing);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "ÉXITO");
-            response.put("mensaje", "Publicación actualizada correctamente");
-            response.put("idPublicacion", updated.getIdPublicacion());
-            return ResponseEntity.ok(response);
+            listingPostRepository.save(listing);
+            ListingDetailDTO updatedDTO = listingAdminService.getListingById(listing.getIdPublicacion());
+            return ResponseEntity.ok(updatedDTO);
         } catch (Exception e) {
+            e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("status", "ERROR");
-            error.put("message", e.getMessage());
+            error.put("message", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
     }

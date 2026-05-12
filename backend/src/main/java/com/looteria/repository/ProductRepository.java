@@ -4,6 +4,7 @@ import com.looteria.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -14,5 +15,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     Iterable<Product> findByTipoArticulo_IdCategoria(Long tipoArticuloId);
     
-    Iterable<Product> findByFranquicia_IdCategoria(Long franquiciaId);
+    List<Product> findByTituloContainingIgnoreCase(String titulo);
 }

@@ -33,14 +33,11 @@ export function LoginRegisterPage({ onNavigate }: LoginRegisterPageProps) {
 
     try {
       if (isLogin) {
-        // LOGIN
         const result = await authService.login(formData.email, formData.password);
-        // Guardar en contexto
         login(result, result.token || "");
         setMessage({ type: 'success', text: 'Login exitoso. Redirigiendo...' });
         setTimeout(() => onNavigate('home'), 1500);
       } else {
-        // REGISTRO
         if (formData.password !== formData.confirmPassword) {
           setMessage({ type: 'error', text: 'Las contraseñas no coinciden' });
           setLoading(false);
@@ -54,7 +51,6 @@ export function LoginRegisterPage({ onNavigate }: LoginRegisterPageProps) {
         }
 
         const result = await authService.register(formData.email, formData.username, formData.password);
-        // Guardar en contexto después del registro
         login(result, result.token || "");
         setMessage({ type: 'success', text: '¡Cuenta creada exitosamente! Redirigiendo...' });
         setTimeout(() => onNavigate('home'), 1500);

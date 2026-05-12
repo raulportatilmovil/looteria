@@ -14,7 +14,7 @@ public class CorsConfig implements WebMvcConfigurer {
                     "http://localhost:3001",
                     "http://localhost:3002",
                     "http://localhost:3003",
-                    "https://looteria.switzerlandnorth.cloudapp.azure.com"
+                    "http://localhost:5173"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")

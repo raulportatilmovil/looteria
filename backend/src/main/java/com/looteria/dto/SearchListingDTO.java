@@ -11,7 +11,6 @@ public class SearchListingDTO {
     private String descripcion;
     private String plataforma;
     private String tipoArticulo;
-    private String franquicia;
     private BigDecimal precio;
     private String estadoArticulo;
     private String tipoTransaccion;
@@ -24,7 +23,7 @@ public class SearchListingDTO {
     public SearchListingDTO() {}
 
     public SearchListingDTO(Long idPublicacion, Long idProducto, String titulo, String descripcion,
-                           String plataforma, String tipoArticulo, String franquicia, BigDecimal precio,
+                           String plataforma, String tipoArticulo, BigDecimal precio,
                            String estadoArticulo, String tipoTransaccion, String region, String usuario,
                            String descripcionEstado, String idioma, LocalDateTime fechaCreacion) {
         this.idPublicacion = idPublicacion;
@@ -33,7 +32,6 @@ public class SearchListingDTO {
         this.descripcion = descripcion;
         this.plataforma = plataforma;
         this.tipoArticulo = tipoArticulo;
-        this.franquicia = franquicia;
         this.precio = precio;
         this.estadoArticulo = estadoArticulo;
         this.tipoTransaccion = tipoTransaccion;
@@ -51,7 +49,6 @@ public class SearchListingDTO {
     public String getDescripcion() { return descripcion; }
     public String getPlataforma() { return plataforma; }
     public String getTipoArticulo() { return tipoArticulo; }
-    public String getFranquicia() { return franquicia; }
     public BigDecimal getPrecio() { return precio; }
     public String getEstadoArticulo() { return estadoArticulo; }
     public String getTipoTransaccion() { return tipoTransaccion; }
@@ -68,7 +65,6 @@ public class SearchListingDTO {
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     public void setPlataforma(String plataforma) { this.plataforma = plataforma; }
     public void setTipoArticulo(String tipoArticulo) { this.tipoArticulo = tipoArticulo; }
-    public void setFranquicia(String franquicia) { this.franquicia = franquicia; }
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
     public void setEstadoArticulo(String estadoArticulo) { this.estadoArticulo = estadoArticulo; }
     public void setTipoTransaccion(String tipoTransaccion) { this.tipoTransaccion = tipoTransaccion; }

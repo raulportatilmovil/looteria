@@ -10,9 +10,29 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
 --
 -- Base de datos: `looteria`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `carrito`
+--
+
+CREATE TABLE `carrito` (
+  `id_carrito` bigint(20) NOT NULL,
+  `id_usuario` bigint(20) NOT NULL,
+  `id_publicacion` bigint(20) NOT NULL,
+  `cantidad` int(11) DEFAULT 1,
+  `fecha_agregado` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -154,6 +174,36 @@ CREATE TABLE `imagenes` (
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Volcado de datos para la tabla `imagenes`
+--
+
+INSERT INTO `imagenes` (`id_imagen`, `id_publicacion`, `ruta_imagen`, `descripcion`, `fecha_creacion`) VALUES
+(1, 1, 'https://images.unsplash.com/photo-1538481143235-67d5c6f2de5c?w=500&h=500&fit=crop', 'Zelda BOTW - Caja y cartucho original', '2026-04-12 21:32:33'),
+(2, 1, 'https://images.unsplash.com/photo-1552806861-20d5892e67c7?w=500&h=500&fit=crop', 'Zelda BOTW - Vista del cartucho', '2026-04-12 21:32:33'),
+(3, 2, 'https://images.unsplash.com/photo-1535905557558-afc4877a26fc?w=500&h=500&fit=crop', 'Elden Ring PS5 - Disco en perfectas condiciones', '2026-04-12 21:32:33'),
+(4, 2, 'https://images.unsplash.com/photo-1516394175018-af557b90f834?w=500&h=500&fit=crop', 'Elden Ring PS5 - Estuche original', '2026-04-12 21:32:33'),
+(7, 4, 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=500&h=500&fit=crop', 'Cyberpunk 2077 Xbox - Disco en buen estado', '2026-04-12 21:32:33'),
+(8, 4, 'https://images.unsplash.com/photo-1516394175018-af557b90f834?w=500&h=500&fit=crop', 'Cyberpunk 2077 - Con caja original', '2026-04-12 21:32:33'),
+(9, 5, 'https://images.unsplash.com/photo-1551288049-bebda4e267f71?w=500&h=500&fit=crop', 'Smash Bros Ultimate - Juego y GameCube controller', '2026-04-12 21:32:33'),
+(10, 5, 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=500&h=500&fit=crop', 'Smash Bros - Todos los accesorios incluidos', '2026-04-12 21:32:33');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `intercambios`
+--
+
+CREATE TABLE `intercambios` (
+  `id_intercambio` bigint(20) NOT NULL,
+  `id_publicacion` bigint(20) NOT NULL,
+  `id_solicitante` bigint(20) NOT NULL,
+  `id_solicitado` bigint(20) NOT NULL,
+  `mensaje` text DEFAULT NULL,
+  `estado` enum('PENDIENTE','ACEPTADA','RECHAZADA','CANCELADA') DEFAULT 'PENDIENTE',
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- --------------------------------------------------------
 
 --
@@ -166,11 +216,25 @@ CREATE TABLE `productos` (
   `descripcion` text DEFAULT NULL,
   `plataforma_id` bigint(20) DEFAULT NULL,
   `tipo_articulo_id` bigint(20) DEFAULT NULL,
-  `franquicia_id` bigint(20) DEFAULT NULL,
   `fecha_lanzamiento` datetime DEFAULT NULL,
   `valor_estimado` decimal(10,2) DEFAULT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `productos`
+--
+
+INSERT INTO `productos` (`id_producto`, `titulo`, `descripcion`, `plataforma_id`, `tipo_articulo_id`, `fecha_lanzamiento`, `valor_estimado`, `fecha_creacion`) VALUES
+(1, 'The Legend of Zelda: Breath of the Wild', 'Juego de acción-aventura épico para Nintendo Switch. Completo con caja y manual original.', 3, 7, NULL, 45.99, '2026-04-12 21:32:33'),
+(2, 'Elden Ring', 'RPG de acción desafiante de FromSoftware. Mundo abierto con jefes épicos.', 1, 7, NULL, 59.99, '2026-04-12 21:32:33'),
+(3, 'Fortnite: Battle Royale', 'Battle royale multiplayer popular. Juego F2P con skins exclusivas.', 4, 7, NULL, 0.00, '2026-04-12 21:32:33'),
+(4, 'Cyberpunk 2077', 'RPG futurista en mundo abierto de CD Projekt Red. Versión mejorada post-parches.', 2, 7, NULL, 49.99, '2026-04-12 21:32:33'),
+(5, 'Super Smash Bros. Ultimate', 'Juego de lucha con todos los personajes Nintendo. Incluye GameCube controller.', 3, 7, NULL, 59.99, '2026-04-12 21:32:33'),
+(6, 'Hollow Knight', 'hola', NULL, NULL, NULL, NULL, '2026-05-11 14:48:46'),
+(7, 'hola', 'sdasd', NULL, NULL, NULL, NULL, '2026-05-12 10:47:14'),
+(8, 'asadas', 'asd', NULL, NULL, NULL, NULL, '2026-05-12 10:48:18'),
+(9, 'asda', 'sada', NULL, NULL, NULL, NULL, '2026-05-12 10:50:03');
 
 -- --------------------------------------------------------
 
@@ -193,6 +257,18 @@ CREATE TABLE `publicaciones` (
   `envio` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Volcado de datos para la tabla `publicaciones`
+--
+
+INSERT INTO `publicaciones` (`id_publicacion`, `id_usuario`, `id_producto`, `tipo_transaccion`, `precio`, `estado_articulo_id`, `descripcion_estado`, `idioma_id`, `region_id`, `fecha_creacion`, `estado_publicacion`, `envio`) VALUES
+(1, 2, 1, 'INTERCAMBIO', 45.99, 12, 'Como nuevo, solo 5 horas de juego. Cambio por otros juegos Nintendo Switch', 16, 20, '2026-04-12 21:32:33', 'ACTIVA', 1),
+(2, 3, 2, 'VENTA', 39.99, 13, 'Elden Ring PS5 usado pero en perfecto estado, solo 20 horas de juego. Incluye CD original', 17, 20, '2026-04-12 21:32:33', 'ACTIVA', 1),
+(4, 11, 4, 'VENTA', 30.00, 13, 'Cyberpunk 2077 Xbox Series X. Funciona perfectamente post-patches, incluye caja', 16, 20, '2026-04-12 21:32:33', 'ACTIVA', 1),
+(5, 3, 5, 'INTERCAMBIO', 45.00, 13, 'Smash Bros Ultimate con todos los accesorios (GameCube controller original). Cambio por Zelda Tears of the Kingdom', 16, 20, '2026-04-12 21:32:33', 'ACTIVA', 1),
+(8, 11, 8, 'VENTA', 40.00, NULL, 'si', NULL, NULL, '2026-05-12 10:48:18', 'ACTIVA', 0),
+(9, 11, 9, 'VENTA', 23.00, 11, 'asdas', 16, 20, '2026-05-12 10:50:03', 'ACTIVA', 0);
+
 -- --------------------------------------------------------
 
 --
@@ -201,12 +277,13 @@ CREATE TABLE `publicaciones` (
 
 CREATE TABLE `resenas` (
   `id_resena` bigint(20) NOT NULL,
-  `id_transaccion` bigint(20) NOT NULL,
+  `id_transaccion` bigint(20) DEFAULT NULL,
   `id_autor` bigint(20) NOT NULL,
   `id_receptor` bigint(20) NOT NULL,
   `puntuacion` int(11) NOT NULL,
   `comentario` text DEFAULT NULL,
-  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `id_publicacion` bigint(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -224,7 +301,9 @@ CREATE TABLE `transacciones` (
   `precio_final` decimal(10,2) NOT NULL,
   `fecha_transaccion` timestamp NOT NULL DEFAULT current_timestamp(),
   `estado` enum('PENDIENTE','COMPLETADA','CANCELADA','DEVUELTA') DEFAULT 'PENDIENTE',
-  `comision` decimal(10,2) DEFAULT NULL
+  `comision` decimal(10,2) DEFAULT NULL,
+  `retencion_pago` decimal(10,2) DEFAULT 0.00,
+  `fecha_entrega_prevista` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -253,7 +332,12 @@ CREATE TABLE `usuarios` (
 INSERT INTO `usuarios` (`id_usuario`, `email`, `contrasena`, `nombre_usuario`, `rol`, `fecha_registro`, `ubicacion`, `puntos_acumulados`, `verificado_identidad`, `reputacion_media`) VALUES
 (1, 'admin@looteria.com', 'admin123', 'admin', 'ADMIN', '2026-02-24 12:17:11', 'España', 1000, 1, 5.00),
 (2, 'user1@example.com', 'password123', 'jugador1', 'REGISTRADO', '2026-02-24 12:17:11', 'Madrid', 100, 1, 4.50),
-(3, 'user2@example.com', 'password456', 'coleccionista', 'REGISTRADO', '2026-02-24 12:17:11', 'Barcelona', 50, 0, 3.75);
+(3, 'user2@example.com', 'password456', 'coleccionista', 'REGISTRADO', '2026-02-24 12:17:11', 'Barcelona', 50, 0, 3.75),
+(8, 'testuser@example.com', 'Password123!', 'testuser123', 'REGISTRADO', '2026-03-16 20:35:35', NULL, 0, 0, 0.00),
+(9, 'usuario2@example.com', 'SecurePass456!', 'usuario2', 'REGISTRADO', '2026-03-16 20:35:52', NULL, 0, 0, 0.00),
+(10, 'raul@gmail.com', '12345', 'rauulvt', 'REGISTRADO', '2026-03-16 20:44:41', NULL, 0, 0, 0.00),
+(11, 'josemi@gmail.com', '123456', 'Minino', 'REGISTRADO', '2026-03-16 22:09:06', 'Sevilla', 0, 0, 0.00),
+(12, 'narvaez@gmail.com', '123456', 'Israel', 'REGISTRADO', '2026-03-17 15:05:29', NULL, 0, 0, 0.00);
 
 -- --------------------------------------------------------
 
@@ -275,6 +359,14 @@ CREATE TABLE `verificaciones` (
 --
 -- Índices para tablas volcadas
 --
+
+--
+-- Indices de la tabla `carrito`
+--
+ALTER TABLE `carrito`
+  ADD PRIMARY KEY (`id_carrito`),
+  ADD UNIQUE KEY `unique_cart_item` (`id_usuario`,`id_publicacion`),
+  ADD KEY `id_publicacion` (`id_publicacion`);
 
 --
 -- Indices de la tabla `categorias`
@@ -301,14 +393,22 @@ ALTER TABLE `imagenes`
   ADD KEY `idx_publicacion` (`id_publicacion`);
 
 --
+-- Indices de la tabla `intercambios`
+--
+ALTER TABLE `intercambios`
+  ADD PRIMARY KEY (`id_intercambio`),
+  ADD KEY `id_publicacion` (`id_publicacion`),
+  ADD KEY `id_solicitante` (`id_solicitante`),
+  ADD KEY `id_solicitado` (`id_solicitado`);
+
+--
 -- Indices de la tabla `productos`
 --
 ALTER TABLE `productos`
   ADD PRIMARY KEY (`id_producto`),
   ADD KEY `idx_titulo` (`titulo`),
   ADD KEY `idx_plataforma` (`plataforma_id`),
-  ADD KEY `idx_tipo_articulo` (`tipo_articulo_id`),
-  ADD KEY `idx_franquicia` (`franquicia_id`);
+  ADD KEY `idx_tipo_articulo` (`tipo_articulo_id`);
 
 --
 -- Indices de la tabla `publicaciones`
@@ -330,7 +430,8 @@ ALTER TABLE `resenas`
   ADD PRIMARY KEY (`id_resena`),
   ADD KEY `id_autor` (`id_autor`),
   ADD KEY `idx_transaccion` (`id_transaccion`),
-  ADD KEY `idx_receptor` (`id_receptor`);
+  ADD KEY `idx_receptor` (`id_receptor`),
+  ADD KEY `resenas_ibfk_4` (`id_publicacion`);
 
 --
 -- Indices de la tabla `transacciones`
@@ -368,6 +469,12 @@ ALTER TABLE `verificaciones`
 --
 
 --
+-- AUTO_INCREMENT de la tabla `carrito`
+--
+ALTER TABLE `carrito`
+  MODIFY `id_carrito` bigint(20) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `categorias`
 --
 ALTER TABLE `categorias`
@@ -383,19 +490,25 @@ ALTER TABLE `envios`
 -- AUTO_INCREMENT de la tabla `imagenes`
 --
 ALTER TABLE `imagenes`
-  MODIFY `id_imagen` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_imagen` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT de la tabla `intercambios`
+--
+ALTER TABLE `intercambios`
+  MODIFY `id_intercambio` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_producto` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `publicaciones`
 --
 ALTER TABLE `publicaciones`
-  MODIFY `id_publicacion` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_publicacion` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `resenas`
@@ -413,7 +526,7 @@ ALTER TABLE `transacciones`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_usuario` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de la tabla `verificaciones`
@@ -424,6 +537,13 @@ ALTER TABLE `verificaciones`
 --
 -- Restricciones para tablas volcadas
 --
+
+--
+-- Filtros para la tabla `carrito`
+--
+ALTER TABLE `carrito`
+  ADD CONSTRAINT `carrito_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE,
+  ADD CONSTRAINT `carrito_ibfk_2` FOREIGN KEY (`id_publicacion`) REFERENCES `publicaciones` (`id_publicacion`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `envios`
@@ -438,12 +558,19 @@ ALTER TABLE `imagenes`
   ADD CONSTRAINT `imagenes_ibfk_1` FOREIGN KEY (`id_publicacion`) REFERENCES `publicaciones` (`id_publicacion`) ON DELETE CASCADE;
 
 --
+-- Filtros para la tabla `intercambios`
+--
+ALTER TABLE `intercambios`
+  ADD CONSTRAINT `intercambios_ibfk_1` FOREIGN KEY (`id_publicacion`) REFERENCES `publicaciones` (`id_publicacion`) ON DELETE CASCADE,
+  ADD CONSTRAINT `intercambios_ibfk_2` FOREIGN KEY (`id_solicitante`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `intercambios_ibfk_3` FOREIGN KEY (`id_solicitado`) REFERENCES `usuarios` (`id_usuario`);
+
+--
 -- Filtros para la tabla `productos`
 --
 ALTER TABLE `productos`
   ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`plataforma_id`) REFERENCES `categorias` (`id_categoria`) ON DELETE SET NULL,
-  ADD CONSTRAINT `productos_ibfk_2` FOREIGN KEY (`tipo_articulo_id`) REFERENCES `categorias` (`id_categoria`) ON DELETE SET NULL,
-  ADD CONSTRAINT `productos_ibfk_3` FOREIGN KEY (`franquicia_id`) REFERENCES `categorias` (`id_categoria`) ON DELETE SET NULL;
+  ADD CONSTRAINT `productos_ibfk_2` FOREIGN KEY (`tipo_articulo_id`) REFERENCES `categorias` (`id_categoria`) ON DELETE SET NULL;
 
 --
 -- Filtros para la tabla `publicaciones`
@@ -461,7 +588,8 @@ ALTER TABLE `publicaciones`
 ALTER TABLE `resenas`
   ADD CONSTRAINT `resenas_ibfk_1` FOREIGN KEY (`id_transaccion`) REFERENCES `transacciones` (`id_transaccion`) ON DELETE CASCADE,
   ADD CONSTRAINT `resenas_ibfk_2` FOREIGN KEY (`id_autor`) REFERENCES `usuarios` (`id_usuario`),
-  ADD CONSTRAINT `resenas_ibfk_3` FOREIGN KEY (`id_receptor`) REFERENCES `usuarios` (`id_usuario`);
+  ADD CONSTRAINT `resenas_ibfk_3` FOREIGN KEY (`id_receptor`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `resenas_ibfk_4` FOREIGN KEY (`id_publicacion`) REFERENCES `publicaciones` (`id_publicacion`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `transacciones`
@@ -479,3 +607,7 @@ ALTER TABLE `verificaciones`
   ADD CONSTRAINT `verificaciones_ibfk_2` FOREIGN KEY (`id_publicacion`) REFERENCES `publicaciones` (`id_publicacion`) ON DELETE CASCADE,
   ADD CONSTRAINT `verificaciones_ibfk_3` FOREIGN KEY (`id_admin_verificador`) REFERENCES `usuarios` (`id_usuario`) ON DELETE SET NULL;
 COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

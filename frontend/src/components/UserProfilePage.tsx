@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { User, Mail, MapPin, Star, Package, ShoppingBag, Truck, Trophy, Edit, Trash2, Plus } from "lucide-react";
+import { User, Mail, MapPin, Star, Package, ShoppingBag, Truck, Trophy, Edit, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Footer } from "./Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+
 import { useAuth } from "../context/AuthContext";
 import profileService from "../api/services/profileService";
 
@@ -19,6 +21,18 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
   const [loading, setLoading] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({ nombreUsuario: "", ubicacion: "" });
+  const [editingListing, setEditingListing] = useState<any>(null);
+  const [editListingData, setEditListingData] = useState({
+    descripcionEstado: "",
+    precio: "",
+    tipoTransaccion: "VENTA",
+    estadoArticulo: "",
+    idioma: "",
+    region: "",
+    estadoPublicacion: "ACTIVA",
+  });
+  const [editingLoading, setEditingLoading] = useState(false);
+  const [receivedReviews, setReceivedReviews] = useState<any[]>([]);
 
   useEffect(() => {
     if (user?.idUsuario) {
@@ -34,6 +48,9 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
 
       const listings = await profileService.getUserListings(user!.idUsuario!);
       setMyListings(listings);
+
+      const reviews = await profileService.getReceivedReviews(user!.idUsuario!);
+      setReceivedReviews(reviews);
     } catch (error) {
       console.error("Error loading profile:", error);
     } finally {
@@ -46,9 +63,9 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
       await profileService.updateProfile(user!.idUsuario!, profileData);
       setProfile({ ...profile, ...profileData });
       setEditingProfile(false);
-      alert("Perfil actualizado correctamente");
+      toast.success("Perfil actualizado correctamente");
     } catch (error) {
-      alert("Error al actualizar el perfil");
+      toast.error("Error al actualizar el perfil");
     }
   };
 
@@ -57,10 +74,75 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
       try {
         await profileService.deleteListing(listingId);
         setMyListings(myListings.filter(l => l.idPublicacion !== listingId));
-        alert("Publicación eliminada");
+        toast.success("Publicación eliminada correctamente");
       } catch (error) {
-        alert("Error al eliminar la publicación");
+        toast.error("Error al eliminar la publicación");
       }
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: number) => {
+    if (confirm("¿Estás seguro de que quieres eliminar esta reseña?")) {
+      try {
+        await profileService.deleteReview(reviewId);
+        setReceivedReviews(receivedReviews.filter(r => r.idResena !== reviewId));
+        toast.success("Reseña eliminada correctamente");
+      } catch (error) {
+        toast.error("Error al eliminar la reseña");
+      }
+    }
+  };
+
+  const handleOpenEditListing = (listing: any) => {
+    setEditingListing(listing);
+    setEditListingData({
+      descripcionEstado: listing.descripcionEstado || "",
+      precio: listing.precio?.toString() || "",
+      tipoTransaccion: listing.tipoTransaccion || "VENTA",
+      estadoArticulo: listing.estadoArticulo || "",
+      idioma: listing.idioma || "",
+      region: listing.region || "",
+      estadoPublicacion: listing.estadoPublicacion || "ACTIVA",
+    });
+  };
+
+  const handleSaveEditListing = async () => {
+    if (!editingListing) return;
+
+    try {
+      setEditingLoading(true);
+      const updated = await profileService.updateListing(editingListing.idPublicacion, {
+        descripcionEstado: editListingData.descripcionEstado,
+        precio: editListingData.precio,
+        tipoTransaccion: editListingData.tipoTransaccion,
+        estadoArticulo: editListingData.estadoArticulo,
+        idioma: editListingData.idioma,
+        region: editListingData.region,
+        estadoPublicacion: editListingData.estadoPublicacion,
+      });
+
+      setMyListings(myListings.map(l =>
+        l.idPublicacion === editingListing.idPublicacion
+          ? { ...l, ...(updated || {}),
+              descripcionEstado: editListingData.descripcionEstado,
+              precio: parseFloat(editListingData.precio),
+              tipoTransaccion: editListingData.tipoTransaccion,
+              estadoArticulo: editListingData.estadoArticulo,
+              idioma: editListingData.idioma,
+              region: editListingData.region,
+              estadoPublicacion: editListingData.estadoPublicacion,
+            }
+          : l
+      ));
+
+      setEditingListing(null);
+      toast.success("Publicación actualizada exitosamente");
+    } catch (error: any) {
+      const serverMsg = error?.response?.data?.message || error?.message || "Error desconocido";
+      toast.error("Error al actualizar la publicación: " + serverMsg);
+      console.error("Error updating listing:", error?.response?.data || error);
+    } finally {
+      setEditingLoading(false);
     }
   };
 
@@ -114,24 +196,6 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
     },
   ];
 
-  const reviews = [
-    {
-      id: "r1",
-      from: "María G.",
-      rating: 5,
-      comment: "Excelente vendedor, producto en perfecto estado.",
-      product: "The Last of Us Part II",
-      date: "10 Mar 2026",
-    },
-    {
-      id: "r2",
-      from: "Pedro R.",
-      rating: 4,
-      comment: "Todo correcto, envío rápido.",
-      product: "God of War",
-      date: "5 Mar 2026",
-    },
-  ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -223,6 +287,145 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
                   className="flex-1"
                   variant="outline"
                   onClick={() => setEditingProfile(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Listing Modal */}
+      {editingListing && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-6">Editar publicación</h2>
+            <p className="text-gray-600 text-sm mb-4 font-medium">{editingListing.titulo || editingListing.producto}</p>
+            <div className="space-y-4">
+
+              {/* Tipo de transacción */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de transacción</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["VENTA", "INTERCAMBIO"].map((tipo) => (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() => setEditListingData({ ...editListingData, tipoTransaccion: tipo })}
+                      className={`p-3 border-2 rounded-lg text-sm font-semibold transition ${
+                        editListingData.tipoTransaccion === tipo
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-gray-200 text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      {tipo === "VENTA" ? "Venta" : "Intercambio"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Precio */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Precio (€)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editListingData.precio}
+                  onChange={(e) => setEditListingData({ ...editListingData, precio: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* Estado del artículo */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Estado del artículo</label>
+                <select
+                  value={editListingData.estadoArticulo}
+                  onChange={(e) => setEditListingData({ ...editListingData, estadoArticulo: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">-- Seleccionar --</option>
+                  <option value="Nuevo">Nuevo</option>
+                  <option value="Como nuevo">Como nuevo</option>
+                  <option value="Buen estado">Buen estado</option>
+                  <option value="En uso">En uso</option>
+                  <option value="Defectuoso">Defectuoso</option>
+                </select>
+              </div>
+
+              {/* Descripción del estado */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Descripción del estado</label>
+                <textarea
+                  rows={3}
+                  value={editListingData.descripcionEstado}
+                  onChange={(e) => setEditListingData({ ...editListingData, descripcionEstado: e.target.value })}
+                  placeholder="Describe el estado del artículo..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                />
+              </div>
+
+              {/* Idioma */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Idioma</label>
+                <select
+                  value={editListingData.idioma}
+                  onChange={(e) => setEditListingData({ ...editListingData, idioma: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">-- Seleccionar --</option>
+                  <option value="Español">Español</option>
+                  <option value="Inglés">Inglés</option>
+                  <option value="Francés">Francés</option>
+                  <option value="Alemán">Alemán</option>
+                </select>
+              </div>
+
+              {/* Región */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Región</label>
+                <select
+                  value={editListingData.region}
+                  onChange={(e) => setEditListingData({ ...editListingData, region: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">-- Seleccionar --</option>
+                  <option value="Europa">Europa</option>
+                  <option value="América del Norte">América del Norte</option>
+                  <option value="América del Sur">América del Sur</option>
+                  <option value="Asia">Asia</option>
+                </select>
+              </div>
+
+              {/* Estado de la publicación */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Estado de la publicación</label>
+                <select
+                  value={editListingData.estadoPublicacion}
+                  onChange={(e) => setEditListingData({ ...editListingData, estadoPublicacion: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="ACTIVA">Activa</option>
+                  <option value="PAUSADA">Pausada</option>
+                  <option value="CANCELADA">Cancelada</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  onClick={handleSaveEditListing}
+                  disabled={editingLoading}
+                >
+                  {editingLoading ? "Guardando..." : "Guardar cambios"}
+                </Button>
+                <Button
+                  className="flex-1"
+                  variant="outline"
+                  onClick={() => setEditingListing(null)}
+                  disabled={editingLoading}
                 >
                   Cancelar
                 </Button>
@@ -387,7 +590,11 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
                           >
                             Ver publicación
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleOpenEditListing(listing)}
+                          >
                             Editar
                           </Button>
                           <Button
@@ -520,41 +727,54 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
 
           {/* Reviews */}
           <TabsContent value="reviews" className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Mis reseñas recibidas</h2>
-            <div className="grid gap-4">
-              {reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="bg-white rounded-xl border border-gray-200 p-6"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-gray-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-gray-900">{review.from}</h4>
-                        <span className="text-sm text-gray-500">{review.date}</span>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Mis reseñas recibidas ({receivedReviews.length})</h2>
+            {receivedReviews.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                <Star className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">Aún no tienes reseñas recibidas</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {receivedReviews.map((review) => (
+                  <div key={review.idResena} className="bg-white rounded-xl border border-gray-200 p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-gray-600" />
                       </div>
-                      <div className="flex items-center gap-1 mb-2">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < review.rating
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{review.usuarioRevisor}</h4>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">{new Date(review.fecha).toLocaleDateString("es-ES")}</span>
+                            <button
+                              onClick={() => handleDeleteReview(review.idResena)}
+                              className="p-1 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar reseña"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 mb-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < review.calificacion
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                          <span className="text-sm text-gray-600 ml-1">{review.calificacion}/5</span>
+                        </div>
+                        <p className="text-gray-700">{review.comentario}</p>
                       </div>
-                      <p className="text-gray-700 mb-1">{review.comment}</p>
-                      <p className="text-sm text-gray-500">Producto: {review.product}</p>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Points */}

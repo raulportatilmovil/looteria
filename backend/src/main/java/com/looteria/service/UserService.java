@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.math.BigDecimal;
+
 
 @Service
 public class UserService {
@@ -61,7 +61,7 @@ public class UserService {
     }
 
     /**
-     * Obtener todos los usuarios como DTOs (para el AdminPanel)
+     * Obtener todos los usuarios como DTOs
      */
     public List<UserDTO> getAllUsersDTO() {
         return userRepository.findAll().stream()

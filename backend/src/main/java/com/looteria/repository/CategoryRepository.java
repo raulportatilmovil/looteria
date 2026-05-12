@@ -12,5 +12,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     
     Iterable<Category> findByTipo(String tipo);
     
+    Optional<Category> findFirstByNombreAndTipo(String nombre, String tipo);
+    
     boolean existsByNombre(String nombre);
 }
