@@ -29,7 +29,8 @@ public class CorsConfig implements WebMvcConfigurer {
             "http://localhost:5173",
             "http://localhost:5174",
             "http://localhost:4173",
-            "https://looteria-front-production.up.railway.app"
+            "https://looteria-front-production.up.railway.app",
+            "https://looteria-back-production.up.railway.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
