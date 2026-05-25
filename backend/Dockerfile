@@ -10,6 +10,9 @@ RUN mvn clean package -DskipTests && rm -rf /root/.m2/repository
 # Runtime stage
 FROM eclipse-temurin:17-jre
 WORKDIR /app
+# Force cache invalidation in runtime stage
+ARG BUILD_DATE
+RUN echo "Runtime timestamp: ${BUILD_DATE:-$(date)}" > /tmp/runtime_timestamp
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
