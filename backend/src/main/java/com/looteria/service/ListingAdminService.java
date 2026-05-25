@@ -58,7 +58,7 @@ public class ListingAdminService {
     /**
      * Eliminar publicación por ID
      */
-    public void deleteListing(Long id) throws IOException {
+    public void deleteListing(Long id) {
         ListingPost listing = listingPostRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Publicación no encontrada"));
         
@@ -66,7 +66,12 @@ public class ListingAdminService {
         List<Image> images = (List<Image>) imageRepository.findByPublicacion_IdPublicacion(id);
         for (Image image : images) {
             if (image.getPublicId() != null) {
-                cloudinary.uploader().destroy(image.getPublicId(), ObjectUtils.emptyMap());
+                try {
+                    cloudinary.uploader().destroy(image.getPublicId(), ObjectUtils.emptyMap());
+                } catch (IOException e) {
+                    // Log error but continue with deletion
+                    System.err.println("Error deleting image from Cloudinary: " + e.getMessage());
+                }
             }
         }
         
