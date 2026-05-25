@@ -307,25 +307,6 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
             </div>
           </div>
 
-          {/* Sección 6: Especificaciones */}
-          <div className="mb-8 pb-8 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Especificaciones</h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Detalles técnicos (versión, accesorios incluidos, etc)
-              </label>
-              <textarea
-                placeholder="p.ej. Incluye caja original, manual, y todos los accesorios..."
-                value={formData.especificaciones}
-                onChange={(e) =>
-                  setFormData({ ...formData, especificaciones: e.target.value })
-                }
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-              />
-            </div>
-          </div>
-
           {/* Sección 6: Imágenes */}
           <div className="mb-8">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Imágenes *</h2>

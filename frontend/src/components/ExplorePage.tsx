@@ -214,7 +214,8 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
                 </select>
               </div>
 
-              <div>
+              <div className="flex flex-col justify-end">
+                <label className="block text-gray-700 text-sm font-medium mb-2 invisible">-</label>
                 <button
                   onClick={() => setFilters({
                     platform: "",
