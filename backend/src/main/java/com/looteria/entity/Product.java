@@ -24,13 +24,13 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "plataforma_id")
-    private Category plataforma;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tipo_articulo_id")
-    private Category tipoArticulo;
+    @ManyToOne(fetch = FetchType.EAGER)
+@JoinColumn(name = "plataforma_id")
+private Category plataforma;
+
+@ManyToOne(fetch = FetchType.EAGER)
+@JoinColumn(name = "tipo_articulo_id")
+private Category tipoArticulo;
     
     @Column(name = "fecha_lanzamiento")
     private LocalDateTime fechaLanzamiento;
