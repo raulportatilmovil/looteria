@@ -15,7 +15,7 @@ const listingToGame = (listing: SearchListing): any => ({
   console: listing.plataforma,
   condition: listing.estadoArticulo,
   image: listing.imagenUrl
-    ? (listing.imagenUrl.startsWith("/") ? `http://localhost:8081/api${listing.imagenUrl}` : listing.imagenUrl)
+    ? (listing.imagenUrl.startsWith("/") ? `${import.meta.env.VITE_API_URL}${listing.imagenUrl}` : listing.imagenUrl)
     : "https://images.unsplash.com/photo-1593024579758-6221e85efbe6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
   location: listing.region,
   rating: 4.5,

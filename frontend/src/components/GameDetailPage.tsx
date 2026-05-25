@@ -75,7 +75,7 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
           verified: true,
         },
         imagenes: (listingData.imagenes || []).map((url: string) =>
-          url.startsWith("/") ? `http://localhost:8081/api${url}` : url
+          url.startsWith("/") ? `${import.meta.env.VITE_API_URL}${url}` : url
         ),
       });
       

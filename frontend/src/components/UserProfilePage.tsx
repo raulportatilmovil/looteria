@@ -531,7 +531,7 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
                   {editingImages.map((img) => (
                     <div key={img.idImagen} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100">
                       <img
-                        src={img.rutaImagen.startsWith("/") ? `http://localhost:8081/api${img.rutaImagen}` : img.rutaImagen}
+                        src={img.rutaImagen.startsWith("/") ? `${import.meta.env.VITE_API_URL}${img.rutaImagen}` : img.rutaImagen}
                         alt="imagen"
                         className="w-full h-full object-cover"
                       />
@@ -727,7 +727,7 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
                       <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {listing.imagenes && listing.imagenes.length > 0 ? (
                           <img
-                            src={listing.imagenes[0].startsWith("/") ? `http://localhost:8081/api${listing.imagenes[0]}` : listing.imagenes[0]}
+                            src={listing.imagenes[0].startsWith("/") ? `${import.meta.env.VITE_API_URL}${listing.imagenes[0]}` : listing.imagenes[0]}
                             alt={listing.producto}
                             className="w-full h-full object-cover"
                           />

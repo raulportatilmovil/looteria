@@ -45,7 +45,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
     console: dto.plataformaNombre,
     condition: dto.estadoArticuloNombre,
     image: dto.imagenes && dto.imagenes.length > 0
-      ? (dto.imagenes[0].startsWith("/") ? `http://localhost:8081/api${dto.imagenes[0]}` : dto.imagenes[0])
+      ? (dto.imagenes[0].startsWith("/") ? `${import.meta.env.VITE_API_URL}${dto.imagenes[0]}` : dto.imagenes[0])
       : "https://images.unsplash.com/photo-1593024579758-6221e85efbe6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwbGF5c3RhdGlvbiUyMGdhbWV8ZW58MXx8fHwxNzYyMjgwMDExfDA&ixlib=rb-4.1.0&q=80&w=1080",
     location: dto.regionNombre,
     rating: 4.5,
