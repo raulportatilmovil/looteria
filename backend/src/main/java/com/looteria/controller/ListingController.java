@@ -17,7 +17,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/publicaciones")
-@CrossOrigin(origins = "*")
 public class ListingController {
 
     @Autowired
@@ -71,8 +70,7 @@ public ResponseEntity<?> getListingById(@PathVariable Long id) {
                     id,
                     request.getDescripcionEstado(),
                     request.getPrecio(),
-                    request.getTipoTransaccion(),
-                    request.getEnvio());
+                    request.getTipoTransaccion());
             return ResponseEntity.ok(listing);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

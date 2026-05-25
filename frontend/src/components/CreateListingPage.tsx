@@ -14,6 +14,7 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const [formData, setFormData] = useState({
     producto: "",
@@ -30,17 +31,21 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach((file) => {
+    const remaining = 3 - previewImages.length;
+    const toAdd = files.slice(0, remaining);
+    toAdd.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         setPreviewImages((prev) => [...prev, event.target?.result as string]);
       };
       reader.readAsDataURL(file);
+      setImageFiles((prev) => [...prev, file]);
     });
   };
 
   const removeImage = (index: number) => {
     setPreviewImages((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,7 +66,17 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
         throw new Error("El precio debe ser mayor a 0");
       }
 
-      await profileService.createListing(user.idUsuario, formData);
+      const listing = await profileService.createListing(user.idUsuario, formData);
+      const listingId = listing?.idPublicacion;
+      if (listingId && imageFiles.length > 0) {
+        for (const file of imageFiles) {
+          try {
+            await profileService.uploadImage(listingId, file);
+          } catch (imgErr) {
+            console.error("Error subiendo imagen:", imgErr);
+          }
+        }
+      }
       onNavigate("profile");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear publicación");
@@ -315,28 +330,30 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
             <h2 className="text-xl font-bold text-gray-900 mb-6">Imágenes *</h2>
 
             {/* Upload Area */}
-            <label className="block border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition">
-              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-700">
-                Haz clic o arrastra imágenes aquí
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Máximo 10 imágenes, PNG, JPG
-              </p>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
+            {previewImages.length < 3 && (
+              <label className="block border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition">
+                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm font-medium text-gray-700">
+                  Haz clic o arrastra imágenes aquí
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Máximo 3 imágenes, PNG, JPG
+                </p>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
 
             {/* Preview */}
             {previewImages.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-sm font-medium text-gray-700 mb-3">
-                  Imágenes cargadas ({previewImages.length}/10)
+                  Imágenes cargadas ({previewImages.length}/3)
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {previewImages.map((img, idx) => (

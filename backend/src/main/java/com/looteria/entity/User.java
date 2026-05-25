@@ -1,9 +1,15 @@
 package com.looteria.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "usuarios")
 public class User {
@@ -39,102 +45,6 @@ public class User {
 
     @Column(name = "reputacion_media", nullable = false, precision = 3, scale = 2)
     private BigDecimal reputacionMedia = BigDecimal.ZERO;
-
-    // Constructores
-    public User() {
-    }
-
-    public User(Long idUsuario, String email, String contrasena, String nombreUsuario, UserRole rol) {
-        this.idUsuario = idUsuario;
-        this.email = email;
-        this.contrasena = contrasena;
-        this.nombreUsuario = nombreUsuario;
-        this.rol = rol;
-        this.puntosAcumulados = 0L;
-        this.verificadoIdentidad = false;
-        this.reputacionMedia = BigDecimal.ZERO;
-    }
-
-    // Getters y Setters
-    public Long getIdUsuario() {
-        return idUsuario;
-    }
-
-    public void setIdUsuario(Long idUsuario) {
-        this.idUsuario = idUsuario;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getContrasena() {
-        return contrasena;
-    }
-
-    public void setContrasena(String contrasena) {
-        this.contrasena = contrasena;
-    }
-
-    public String getNombreUsuario() {
-        return nombreUsuario;
-    }
-
-    public void setNombreUsuario(String nombreUsuario) {
-        this.nombreUsuario = nombreUsuario;
-    }
-
-    public UserRole getRol() {
-        return rol;
-    }
-
-    public void setRol(UserRole rol) {
-        this.rol = rol;
-    }
-
-    public LocalDateTime getFechaRegistro() {
-        return fechaRegistro;
-    }
-
-    public void setFechaRegistro(LocalDateTime fechaRegistro) {
-        this.fechaRegistro = fechaRegistro;
-    }
-
-    public String getUbicacion() {
-        return ubicacion;
-    }
-
-    public void setUbicacion(String ubicacion) {
-        this.ubicacion = ubicacion;
-    }
-
-    public Long getPuntosAcumulados() {
-        return puntosAcumulados;
-    }
-
-    public void setPuntosAcumulados(Long puntosAcumulados) {
-        this.puntosAcumulados = puntosAcumulados;
-    }
-
-    public Boolean getVerificadoIdentidad() {
-        return verificadoIdentidad;
-    }
-
-    public void setVerificadoIdentidad(Boolean verificadoIdentidad) {
-        this.verificadoIdentidad = verificadoIdentidad;
-    }
-
-    public BigDecimal getReputacionMedia() {
-        return reputacionMedia;
-    }
-
-    public void setReputacionMedia(BigDecimal reputacionMedia) {
-        this.reputacionMedia = reputacionMedia;
-    }
 
     @PrePersist
     protected void onCreate() {

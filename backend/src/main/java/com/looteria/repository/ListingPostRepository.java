@@ -4,15 +4,18 @@ import com.looteria.dto.ListingSearchProjection;
 import com.looteria.entity.ListingPost;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface ListingPostRepository extends JpaRepository<ListingPost, Long> {
-    
+
     Iterable<ListingPost> findByUsuario_IdUsuario(Long usuarioId);
-    
+
     Iterable<ListingPost> findByProducto_IdProducto(Long productoId);
-    
+
     @Query(value = "SELECT " +
            "lp.id_publicacion AS idPublicacion, " +
            "p.id_producto AS idProducto, " +
@@ -40,4 +43,13 @@ public interface ListingPostRepository extends JpaRepository<ListingPost, Long> 
            "ORDER BY lp.fecha_creacion DESC",
            nativeQuery = true)
     Iterable<ListingSearchProjection> findAllActiveListings();
+
+    long countByEstadoPublicacion(ListingPost.PublicationStatus estadoPublicacion);
+
+    List<ListingPost> findByDestacadoTrueAndEstadoPublicacion(ListingPost.PublicationStatus estadoPublicacion);
+
+    List<ListingPost> findByEstadoPublicacionOrderByFechaCreacionDesc(ListingPost.PublicationStatus estadoPublicacion);
+
+    @Query("SELECT lp FROM ListingPost lp WHERE lp.estadoPublicacion = :status ORDER BY lp.usuario.reputacionMedia DESC")
+    List<ListingPost> findPopularByStatus(@Param("status") ListingPost.PublicationStatus status);
 }

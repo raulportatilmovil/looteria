@@ -1,8 +1,14 @@
 package com.looteria.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "intercambios")
 public class Exchange {
@@ -32,75 +38,6 @@ public class Exchange {
     
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
-
-    public Exchange() {}
-
-    public Exchange(Long idIntercambio, ListingPost publicacion, User solicitante, 
-                   User solicitado, String mensaje, ExchangeStatus estado, LocalDateTime fechaCreacion) {
-        this.idIntercambio = idIntercambio;
-        this.publicacion = publicacion;
-        this.solicitante = solicitante;
-        this.solicitado = solicitado;
-        this.mensaje = mensaje;
-        this.estado = estado;
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    public Long getIdIntercambio() {
-        return idIntercambio;
-    }
-
-    public void setIdIntercambio(Long idIntercambio) {
-        this.idIntercambio = idIntercambio;
-    }
-
-    public ListingPost getPublicacion() {
-        return publicacion;
-    }
-
-    public void setPublicacion(ListingPost publicacion) {
-        this.publicacion = publicacion;
-    }
-
-    public User getSolicitante() {
-        return solicitante;
-    }
-
-    public void setSolicitante(User solicitante) {
-        this.solicitante = solicitante;
-    }
-
-    public User getSolicitado() {
-        return solicitado;
-    }
-
-    public void setSolicitado(User solicitado) {
-        this.solicitado = solicitado;
-    }
-
-    public String getMensaje() {
-        return mensaje;
-    }
-
-    public void setMensaje(String mensaje) {
-        this.mensaje = mensaje;
-    }
-
-    public ExchangeStatus getEstado() {
-        return estado;
-    }
-
-    public void setEstado(ExchangeStatus estado) {
-        this.estado = estado;
-    }
-
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
 
     @PrePersist
     protected void onCreate() {

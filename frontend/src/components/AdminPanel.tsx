@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
-import { adminService, UserDTO, ListingDetailDTO } from '../api/services/adminService';
-import { Trash2, RefreshCw, AlertCircle, Check } from 'lucide-react';
+import { adminService, UserDTO, ListingDetailDTO, DashboardStatsDTO, TransactionDTO } from '../api/services/adminService';
+import { homePageService } from '../api/services/homePageService';
+import { Trash2, RefreshCw, AlertCircle, Check, Users, ShoppingBag, TrendingUp, ShieldCheck, Star } from 'lucide-react';
 
-type Tab = 'usuarios' | 'publicaciones';
+type Tab = 'dashboard' | 'usuarios' | 'publicaciones' | 'transacciones';
 
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState<Tab>('usuarios');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [users, setUsers] = useState<UserDTO[]>([]);
   const [listings, setListings] = useState<ListingDetailDTO[]>([]);
+  const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
+  const [stats, setStats] = useState<DashboardStatsDTO | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'user' | 'listing'; id: number } | null>(null);
@@ -21,12 +24,16 @@ export default function AdminPanel() {
     setLoading(true);
     setError('');
     try {
-      const [usersRes, listingsRes] = await Promise.all([
+      const [usersRes, listingsRes, transactionsRes, statsRes] = await Promise.all([
         adminService.getAllUsers(),
-        adminService.getAllListings()
+        adminService.getAllListings(),
+        adminService.getAllTransactions(),
+        adminService.getDashboardStats()
       ]);
       setUsers(usersRes.data);
       setListings(listingsRes.data);
+      setTransactions(transactionsRes.data);
+      setStats(statsRes.data);
     } catch (err) {
       setError('Error al cargar datos');
       console.error(err);
@@ -57,6 +64,18 @@ export default function AdminPanel() {
       setDeleteConfirm(null);
     } catch (err) {
       setError('Error al eliminar publicación');
+      console.error(err);
+    }
+  };
+
+  const handleToggleFeatured = async (id: number) => {
+    try {
+      await homePageService.toggleFeatured(id);
+      setListings(listings.map(l => l.idPublicacion === id ? { ...l, destacado: !l.destacado } : l));
+      setSuccessMessage('Estado destacado actualizado');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      setError('Error al actualizar destacado');
       console.error(err);
     }
   };
@@ -95,6 +114,16 @@ export default function AdminPanel() {
         {/* Tabs */}
         <div className="flex gap-4 mb-6 border-b border-gray-200">
           <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-4 py-3 font-medium border-b-2 transition ${
+              activeTab === 'dashboard'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Dashboard
+          </button>
+          <button
             onClick={() => setActiveTab('usuarios')}
             className={`px-4 py-3 font-medium border-b-2 transition ${
               activeTab === 'usuarios'
@@ -114,12 +143,22 @@ export default function AdminPanel() {
           >
             Publicaciones ({listings.length})
           </button>
+          <button
+            onClick={() => setActiveTab('transacciones')}
+            className={`px-4 py-3 font-medium border-b-2 transition ${
+              activeTab === 'transacciones'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Transacciones ({transactions.length})
+          </button>
         </div>
 
         {/* Confirmación de eliminación */}
         {deleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 max-w-sm">
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="bg-white rounded-lg border border-gray-200 shadow-lg p-6 max-w-sm">
               <h3 className="text-lg font-bold mb-4">
                 ¿Está seguro de que desea eliminar?
               </h3>
@@ -152,6 +191,45 @@ export default function AdminPanel() {
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             <p className="mt-4 text-gray-600">Cargando...</p>
+          </div>
+        ) : activeTab === 'dashboard' ? (
+          // DASHBOARD
+          <div className="space-y-6">
+            {stats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-gray-600">Total Usuarios</h3>
+                    <Users className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900">{stats.totalUsuarios}</p>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-gray-600">Usuarios Verificados</h3>
+                    <ShieldCheck className="w-5 h-5 text-green-500" />
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900">{stats.usuariosVerificados}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {stats.totalUsuarios > 0 ? ((stats.usuariosVerificados / stats.totalUsuarios) * 100).toFixed(1) : 0}% del total
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-gray-600">Publicaciones Activas</h3>
+                    <ShoppingBag className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900">{stats.publicacionesActivas}</p>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-gray-600">Transacciones Completadas</h3>
+                    <TrendingUp className="w-5 h-5 text-purple-500" />
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900">{stats.transaccionesCompletadas}</p>
+                </div>
+              </div>
+            )}
           </div>
         ) : activeTab === 'usuarios' ? (
           // USUARIOS TABLE
@@ -214,7 +292,7 @@ export default function AdminPanel() {
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : activeTab === 'publicaciones' ? (
           // PUBLICACIONES TABLE
           <div className="bg-white rounded-lg shadow overflow-x-auto">
             <table className="w-full">
@@ -257,18 +335,27 @@ export default function AdminPanel() {
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           listing.estadoPublicacion === 'ACTIVA' ? 'bg-green-100 text-green-800' :
-                          'bg-red-100 text-red-800'
+                          'bg-gray-100 text-gray-800'
                         }`}>
-                          {listing.estadoPublicacion}
+                          {listing.estadoPublicacion === 'ACTIVA' ? 'Activa' : 'Desactivada'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <button
-                          onClick={() => setDeleteConfirm({ type: 'listing', id: listing.idPublicacion! })}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded transition"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleToggleFeatured(listing.idPublicacion!)}
+                            className={`p-2 rounded transition ${listing.destacado ? 'text-yellow-600 bg-yellow-100' : 'text-gray-400 hover:bg-gray-100'}`}
+                            title={listing.destacado ? 'Quitar destacado' : 'Marcar como destacado'}
+                          >
+                            <Star size={18} fill={listing.destacado ? 'currentColor' : 'none'} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm({ type: 'listing', id: listing.idPublicacion! })}
+                            className="p-2 text-red-600 hover:bg-red-100 rounded transition"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -276,7 +363,63 @@ export default function AdminPanel() {
               </tbody>
             </table>
           </div>
-        )}
+        ) : activeTab === 'transacciones' ? (
+          // TRANSACCIONES TABLE
+          <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-100 border-b">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Producto</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Comprador</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Vendedor</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Precio</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                      No hay transacciones
+                    </td>
+                  </tr>
+                ) : (
+                  transactions.map((transaction) => (
+                    <tr key={transaction.idTransaccion} className="border-b hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900">{transaction.idTransaccion}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">{transaction.productoTitulo}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{transaction.compradorNombre}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{transaction.vendedorNombre}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          {transaction.tipo}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        €{transaction.precioFinal.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          transaction.estado === 'COMPLETADA' ? 'bg-green-100 text-green-800' :
+                          transaction.estado === 'EN_TRANSITO' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {transaction.estado}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {new Date(transaction.fechaTransaccion).toLocaleDateString('es-ES')}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </div>
     </div>
   );

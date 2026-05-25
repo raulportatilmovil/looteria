@@ -20,6 +20,7 @@ export interface ListingItem {
   estadoPublicacion: string;
   descripcionEstado: string;
   fechaPublicacion: string;
+  imagenes?: string[];
 }
 
 export interface Review {
@@ -99,6 +100,25 @@ export const profileService = {
     return response.data;
   },
 
+  uploadImage: async (listingId: number, file: File): Promise<{ rutaImagen: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await axiosInstance.post(`/imagenes/upload/${listingId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+
+  getImages: async (listingId: number): Promise<{ idImagen: number; rutaImagen: string }[]> => {
+    const response = await axiosInstance.get(`/imagenes/${listingId}`);
+    return response.data;
+  },
+
+  deleteImage: async (imageId: number): Promise<any> => {
+    const response = await axiosInstance.delete(`/imagenes/${imageId}`);
+    return response.data;
+  },
+
   getActiveListings: async (): Promise<any[]> => {
     const response = await axiosInstance.get('/publicaciones/activas');
     return response.data;
@@ -174,6 +194,28 @@ export const profileService = {
     const response = await axiosInstance.put(`/intercambios/${exchangeId}/estado`, {
       estado,
     });
+    return response.data;
+  },
+
+  canjearPuntos: async (userId: number, tipoCanje: string): Promise<{ codigo: string; descripcion: string; puntosUsados: number; puntosRestantes: number }> => {
+    const response = await axiosInstance.post('/perfil/canjear-puntos', { userId, tipoCanje });
+    return response.data;
+  },
+
+  // ─── Verification endpoints ───────────────────────────────────────────────────
+
+  enviarCodigoVerificacion: async (userId: number): Promise<{ message: string }> => {
+    const response = await axiosInstance.post(`/verificacion/enviar-codigo/${userId}`);
+    return response.data;
+  },
+
+  verificarCodigo: async (userId: number, codigo: string): Promise<{ message: string }> => {
+    const response = await axiosInstance.post(`/verificacion/verificar/${userId}`, { codigo });
+    return response.data;
+  },
+
+  getEstadoVerificacion: async (userId: number): Promise<{ verificado: boolean }> => {
+    const response = await axiosInstance.get(`/verificacion/estado/${userId}`);
     return response.data;
   },
 };

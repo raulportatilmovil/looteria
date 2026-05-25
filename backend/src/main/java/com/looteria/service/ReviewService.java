@@ -75,6 +75,10 @@ public class ReviewService {
 
         Review saved = reviewRepository.save(review);
         updateReputacionMedia(receptor.getIdUsuario());
+        if (puntuacion >= 4) {
+            receptor.setPuntosAcumulados(receptor.getPuntosAcumulados() + 25L);
+            userRepository.save(receptor);
+        }
         return saved;
     }
 

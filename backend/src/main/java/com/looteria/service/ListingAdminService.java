@@ -1,13 +1,16 @@
 package com.looteria.service;
 
 import com.looteria.dto.ListingDetailDTO;
+import com.looteria.entity.Image;
 import com.looteria.entity.ListingPost;
+import com.looteria.repository.ImageRepository;
 import com.looteria.repository.ListingPostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -16,6 +19,9 @@ public class ListingAdminService {
 
     @Autowired
     private ListingPostRepository listingPostRepository;
+
+    @Autowired
+    private ImageRepository imageRepository;
 
     /**
      * Obtener todas las publicaciones 
@@ -128,13 +134,20 @@ public class ListingAdminService {
             } else {
                 dto.setEstadoPublicacion("DESCONOCIDO");
             }
-            
-            dto.setEnvio(listing.getEnvio());
+
+            dto.setDestacado(listing.getDestacado() != null ? listing.getDestacado() : false);
+
+            // Poblar imágenes
+            List<Image> images = (List<Image>) imageRepository.findByPublicacion_IdPublicacion(listing.getIdPublicacion());
+            List<String> imageUrls = images.stream()
+                    .map(Image::getRutaImagen)
+                    .collect(Collectors.toList());
+            dto.setImagenes(imageUrls);
         } catch (Exception e) {
             // Log silenciosamente si hay errores
             e.printStackTrace();
         }
-        
+
         return dto;
     }
 }

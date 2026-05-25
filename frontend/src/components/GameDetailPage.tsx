@@ -27,7 +27,6 @@ interface Review {
 export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameDetailPageProps) {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [exchangeMessage, setExchangeMessage] = useState("");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -37,6 +36,7 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
   const [reviews, setReviews] = useState<Review[]>([]);
   const [newReview, setNewReview] = useState({ calificacion: 5, comentario: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [buyLoading, setBuyLoading] = useState(false);
   const { user } = useAuth();
 
   const loadListingData = useCallback(async () => {
@@ -63,18 +63,20 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
         estimatedValue: listingData.precio ? Math.round(listingData.precio * 1.2) : 0,
         itemType: listingData.tipoArticulo || "Artículo",
         language: listingData.idioma || "Desconocido",
-        shipping: true,
-        shippingCost: 5,
         location: listingData.ubicacion || "España",
         rating: listingData.usuarioReputacion || 0,
         transactionType: listingData.tipoTransaccion === "both" ? "both" : "sale",
+        vendedorId: listingData.idUsuario || listingData.usuarioId,
+        idPublicacion: parseInt(gameId, 10),
         seller: {
-          name: listingData.usuarioNombre || "Vendedor",
+          name: listingData.usuarioNombre || listingData.nombreUsuario || "Vendedor",
           reputation: listingData.usuarioReputacion || 0,
           totalSales: listingData.usuarioVentas || 0,
           verified: true,
         },
-        imagenes: listingData.imagenes || [],
+        imagenes: (listingData.imagenes || []).map((url: string) =>
+          url.startsWith("/") ? `http://localhost:8081/api${url}` : url
+        ),
       });
       
       const transformedReviews = reviewsData.map((review: any) => ({
@@ -143,29 +145,43 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
     }
   };
 
-  const handleRequestVerification = () => {
-    if (userRole === "guest") {
-      toast.error("Debes iniciar sesión para solicitar verificación");
-      onNavigate("login");
+  const confirmPurchase = async () => {
+    if (!user?.idUsuario || !gameData) return;
+    if (!gameData.vendedorId) {
+      toast.error("Error: No se pudo identificar al vendedor");
       return;
     }
-    setShowVerificationModal(true);
-  };
-
-  const confirmPurchase = () => {
-    toast.success("Compra realizada con éxito. El pago está en retención hasta la entrega.");
-    setShowBuyModal(false);
+    setBuyLoading(true);
+    try {
+      const precioTotal = gameData.price;
+      console.log("Enviando transacción:", {
+        publicacionId: gameData.idPublicacion,
+        compradorId: user.idUsuario,
+        vendedorId: gameData.vendedorId,
+        tipo: "VENTA",
+        precioFinal: precioTotal,
+      });
+      await profileService.createTransaction(
+        gameData.idPublicacion,
+        user.idUsuario,
+        gameData.vendedorId,
+        "VENTA",
+        precioTotal
+      );
+      toast.success("Compra realizada con éxito. El vendedor preparará el envío.");
+      setShowBuyModal(false);
+    } catch (err: any) {
+      console.error("Error en transacción:", err?.response?.data);
+      toast.error(err?.response?.data?.error || "Error al procesar la compra");
+    } finally {
+      setBuyLoading(false);
+    }
   };
 
   const confirmExchange = () => {
     toast.success("Propuesta de intercambio enviada correctamente");
     setShowExchangeModal(false);
     setExchangeMessage("");
-  };
-
-  const confirmVerification = () => {
-    toast.success("Solicitud de verificación enviada. Recibirás una notificación cuando sea procesada.");
-    setShowVerificationModal(false);
   };
 
   return (
@@ -262,33 +278,41 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
               </div>
 
               <div className="flex items-center gap-2 mb-6">
-                <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                  <span className="font-semibold text-gray-900">{gameData.rating}</span>
-                </div>
-                <span className="text-gray-500 text-sm">({reviews.length} reseñas)</span>
+                {reviews.length > 0 ? (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                      <span className="font-semibold text-gray-900">{gameData.rating}</span>
+                    </div>
+                    <span className="text-gray-500 text-sm">({reviews.length} reseñas)</span>
+                  </>
+                ) : (
+                  <span className="text-gray-500 text-sm">Sin reseñas aún</span>
+                )}
               </div>
 
               <div className="bg-gradient-to-r from-primary/10 to-blue-50 rounded-xl p-6 mb-6">
                 <div className="flex items-baseline gap-2 mb-2">
                   <span className="text-4xl font-bold text-primary">{gameData.price}€</span>
-                  {gameData.shipping && (
-                    <span className="text-sm text-gray-600">+ {gameData.shippingCost}€ envío</span>
-                  )}
                 </div>
-                <p className="text-sm text-gray-600">Valor estimado: {gameData.estimatedValue}€</p>
               </div>
 
               {/* Action Buttons */}
               <div className="space-y-3">
                 {gameData.transactionType !== "exchange" && (
-                  <Button
-                    onClick={handleBuy}
-                    className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg"
-                  >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Comprar ahora
-                  </Button>
+                  user?.idUsuario === gameData.vendedorId ? (
+                    <div className="w-full bg-gray-100 text-gray-500 text-center py-4 rounded-lg text-sm">
+                      Esta es tu publicación
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={handleBuy}
+                      className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-lg"
+                    >
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Comprar ahora
+                    </Button>
+                  )
                 )}
                 
                 {(gameData.transactionType === "exchange" || gameData.transactionType === "both") && (
@@ -299,17 +323,6 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
                   >
                     <Repeat className="w-5 h-5 mr-2" />
                     Proponer intercambio
-                  </Button>
-                )}
-
-                {gameData.estimatedValue > 100 && (
-                  <Button
-                    onClick={handleRequestVerification}
-                    variant="outline"
-                    className="w-full border-green-600 text-green-600 hover:bg-green-600 hover:text-white py-3"
-                  >
-                    <ShieldCheck className="w-5 h-5 mr-2" />
-                    Solicitar verificación profesional
                   </Button>
                 )}
               </div>
@@ -329,9 +342,8 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
                           <ShieldCheck className="w-4 h-4 text-green-600" />
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        <span className="text-gray-600">{gameData.seller.reputation || 0} • {gameData.seller.totalSales || 0} ventas</span>
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <span>{gameData.seller.totalSales || 0} ventas</span>
                       </div>
                     </div>
                   </div>
@@ -371,12 +383,6 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
                 <div className="flex justify-between py-3 border-b border-gray-100">
                   <span className="text-gray-600">Idioma:</span>
                   <span className="font-medium text-gray-900">{gameData.language}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-gray-100">
-                  <span className="text-gray-600">Envío:</span>
-                  <span className="font-medium text-gray-900">
-                    {gameData.shipping ? `Disponible (${gameData.shippingCost}€)` : "No disponible"}
-                  </span>
                 </div>
               </div>
             </div>
@@ -460,30 +466,6 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Shipping Info */}
-            {gameData.shipping && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Truck className="w-6 h-6 text-primary" />
-                  <h3 className="font-semibold text-gray-900">Información de envío</h3>
-                </div>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-600 mt-1">✓</span>
-                    <span>Envío en 24-48h laborables</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-600 mt-1">✓</span>
-                    <span>Embalaje seguro y protegido</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-600 mt-1">✓</span>
-                    <span>Seguimiento online incluido</span>
-                  </li>
-                </ul>
-              </div>
-            )}
-
             {/* Secure Payment */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="flex items-center gap-3 mb-4">
@@ -520,21 +502,11 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
           </DialogHeader>
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Precio del producto:</span>
-                <span className="font-medium">{gameData.price}€</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Gastos de envío:</span>
-                <span className="font-medium">{gameData.shippingCost}€</span>
-              </div>
-              <div className="border-t border-gray-200 pt-2 mt-2">
-                <div className="flex justify-between">
-                  <span className="font-semibold text-gray-900">Total:</span>
-                  <span className="font-bold text-primary text-xl">
-                    {gameData.price + gameData.shippingCost}€
-                  </span>
-                </div>
+              <div className="flex justify-between">
+                <span className="font-semibold text-gray-900">Total:</span>
+                <span className="font-bold text-primary text-xl">
+                  {gameData.price}€
+                </span>
               </div>
             </div>
             <p className="text-sm text-gray-600">
@@ -544,8 +516,8 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
               <Button variant="outline" onClick={() => setShowBuyModal(false)} className="flex-1">
                 Cancelar
               </Button>
-              <Button onClick={confirmPurchase} className="flex-1 bg-primary">
-                Confirmar compra
+              <Button onClick={confirmPurchase} className="flex-1 bg-primary" disabled={buyLoading}>
+                {buyLoading ? "Procesando..." : "Confirmar compra"}
               </Button>
             </div>
           </div>
@@ -590,46 +562,6 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
               </Button>
               <Button onClick={confirmExchange} className="flex-1 bg-primary">
                 Enviar propuesta
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Verification Modal */}
-      <Dialog open={showVerificationModal} onOpenChange={setShowVerificationModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Solicitar verificación profesional</DialogTitle>
-            <DialogDescription>
-              Este servicio incluye autenticación y valoración profesional del artículo
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <p className="text-sm text-blue-900 mb-2">
-                <strong>Precio del servicio:</strong> 15€
-              </p>
-              <p className="text-sm text-blue-800">
-                Un experto verificará la autenticidad y estado del producto, proporcionando un
-                certificado de verificación oficial.
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Motivo de la verificación
-              </label>
-              <Textarea
-                placeholder="Explica por qué solicitas la verificación..."
-                rows={3}
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setShowVerificationModal(false)} className="flex-1">
-                Cancelar
-              </Button>
-              <Button onClick={confirmVerification} className="flex-1 bg-green-600 hover:bg-green-700">
-                Solicitar verificación
               </Button>
             </div>
           </div>

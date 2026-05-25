@@ -2,7 +2,11 @@ import { Filter, X } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "./ui/badge";
 
-export function Filters() {
+interface FiltersProps {
+  onFilterChange: (filters: { itemType: string; platform: string; condition: string }) => void;
+}
+
+export function Filters({ onFilterChange }: FiltersProps) {
   const [selectedItemType, setSelectedItemType] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("");
   const [selectedCondition, setSelectedCondition] = useState("");
@@ -13,6 +17,15 @@ export function Filters() {
     setSelectedItemType("");
     setSelectedPlatform("");
     setSelectedCondition("");
+    onFilterChange({ itemType: "", platform: "", condition: "" });
+  };
+
+  const handleFilterChange = () => {
+    onFilterChange({
+      itemType: selectedItemType,
+      platform: selectedPlatform,
+      condition: selectedCondition
+    });
   };
 
   return (
@@ -41,7 +54,10 @@ export function Filters() {
           </label>
           <select
             value={selectedItemType}
-            onChange={(e) => setSelectedItemType(e.target.value)}
+            onChange={(e) => {
+              setSelectedItemType(e.target.value);
+              handleFilterChange();
+            }}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary bg-white"
           >
             <option value="">Todos los tipos</option>
@@ -57,7 +73,10 @@ export function Filters() {
           </label>
           <select
             value={selectedPlatform}
-            onChange={(e) => setSelectedPlatform(e.target.value)}
+            onChange={(e) => {
+              setSelectedPlatform(e.target.value);
+              handleFilterChange();
+            }}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary bg-white"
           >
             <option value="">Todas las plataformas</option>
@@ -73,14 +92,17 @@ export function Filters() {
           </label>
           <select
             value={selectedCondition}
-            onChange={(e) => setSelectedCondition(e.target.value)}
+            onChange={(e) => {
+              setSelectedCondition(e.target.value);
+              handleFilterChange();
+            }}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary bg-white"
           >
             <option value="">Todos los estados</option>
             <option value="new">Nuevo</option>
             <option value="like-new">Como nuevo</option>
-            <option value="very-good">Muy bueno</option>
-            <option value="good">Bueno</option>
+            <option value="very-good">Buen estado</option>
+            <option value="good">En uso</option>
           </select>
         </div>
       </div>
@@ -106,7 +128,7 @@ export function Filters() {
               <Badge className="bg-green-100 text-green-700 border-0">
                 {selectedCondition === "new" ? "Nuevo" :
                  selectedCondition === "like-new" ? "Como nuevo" :
-                 selectedCondition === "very-good" ? "Muy bueno" : "Bueno"}
+                 selectedCondition === "very-good" ? "Buen estado" : "En uso"}
               </Badge>
             )}
           </div>

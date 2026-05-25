@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Mail, MapPin, Star, Package, ShoppingBag, Truck, Trophy, Edit, Trash2 } from "lucide-react";
+import { User, Mail, MapPin, Star, Package, ShoppingBag, Truck, Trophy, Edit, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Footer } from "./Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -14,7 +14,7 @@ interface UserProfilePageProps {
   userRole?: "guest" | "registered" | "admin";
 }
 
-export function UserProfilePage({ onNavigate, userRole = "registered" }: UserProfilePageProps) {
+export function UserProfilePage({ onNavigate, userRole: _userRole = "registered" }: UserProfilePageProps) {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [myListings, setMyListings] = useState<any[]>([]);
@@ -33,10 +33,23 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
   });
   const [editingLoading, setEditingLoading] = useState(false);
   const [receivedReviews, setReceivedReviews] = useState<any[]>([]);
+  const [editingImages, setEditingImages] = useState<{ idImagen: number; rutaImagen: string }[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [redemptionModal, setRedemptionModal] = useState<{ codigo: string; descripcion: string; puntosUsados: number } | null>(null);
+  const [canjeLoading, setCanjeLoading] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [updatingTx, setUpdatingTx] = useState<number | null>(null);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
 
   useEffect(() => {
     if (user?.idUsuario) {
       loadProfileData();
+      loadVerificationStatus();
     }
   }, [user]);
 
@@ -51,10 +64,83 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
 
       const reviews = await profileService.getReceivedReviews(user!.idUsuario!);
       setReceivedReviews(reviews);
+
+      const [asBuyer, asSeller] = await Promise.all([
+        profileService.getTransactionsByBuyer(user!.idUsuario!),
+        profileService.getTransactionsBySeller(user!.idUsuario!),
+      ]);
+      const merged = [
+        ...asBuyer.map((t: any) => ({ ...t, rol: "comprador" })),
+        ...asSeller
+          .filter((t: any) => !asBuyer.some((b: any) => b.idTransaccion === t.idTransaccion))
+          .map((t: any) => ({ ...t, rol: "vendedor" })),
+      ].sort((a, b) => new Date(b.fechaTransaccion).getTime() - new Date(a.fechaTransaccion).getTime());
+      setTransactions(merged);
     } catch (error) {
       console.error("Error loading profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadVerificationStatus = async () => {
+    try {
+      const { verificado } = await profileService.getEstadoVerificacion(user!.idUsuario!);
+      setIsVerified(verificado);
+    } catch (error) {
+      console.error("Error loading verification status:", error);
+    }
+  };
+
+  const handleSendVerificationCode = async () => {
+    setSendingCode(true);
+    try {
+      await profileService.enviarCodigoVerificacion(user!.idUsuario!);
+      toast.success("Código enviado a tu email. Revisa tu bandeja de entrada.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Error al enviar el código");
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode) {
+      toast.error("Introduce el código de verificación");
+      return;
+    }
+    setVerifyingCode(true);
+    try {
+      await profileService.verificarCodigo(user!.idUsuario!, verificationCode);
+      toast.success("¡Verificación completada! Has recibido 100 puntos.");
+      setIsVerified(true);
+      setShowVerificationModal(false);
+      setVerificationCode("");
+      await loadProfileData(); // Recargar para ver los puntos actualizados
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Código inválido o expirado");
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
+  const handleUpdateTransactionStatus = async (idTransaccion: number, nuevoEstado: string) => {
+    setUpdatingTx(idTransaccion);
+    try {
+      await profileService.updateTransactionStatus(idTransaccion, nuevoEstado);
+      setTransactions(prev =>
+        prev.map(t => t.idTransaccion === idTransaccion ? { ...t, estado: nuevoEstado } : t)
+      );
+      if (nuevoEstado === "COMPLETADA") {
+        toast.success("¡Recepción confirmada!");
+        await loadProfileData();
+      } else {
+        toast.success("Estado actualizado correctamente.");
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Error al actualizar el estado");
+    } finally {
+      setUpdatingTx(null);
     }
   };
 
@@ -93,8 +179,16 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
     }
   };
 
-  const handleOpenEditListing = (listing: any) => {
+  const handleOpenEditListing = async (listing: any) => {
     setEditingListing(listing);
+    setNewImageFiles([]);
+    setNewImagePreviews([]);
+    try {
+      const imgs = await profileService.getImages(listing.idPublicacion);
+      setEditingImages(imgs);
+    } catch {
+      setEditingImages([]);
+    }
     setEditListingData({
       descripcionEstado: listing.descripcionEstado || "",
       precio: listing.precio?.toString() || "",
@@ -106,11 +200,42 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
     });
   };
 
+  const handleAddEditImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 3 - editingImages.length - newImagePreviews.length;
+    const toAdd = files.slice(0, remaining);
+    toAdd.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => setNewImagePreviews((prev) => [...prev, ev.target?.result as string]);
+      reader.readAsDataURL(file);
+      setNewImageFiles((prev) => [...prev, file]);
+    });
+  };
+
+  const handleDeleteEditImage = async (imageId: number) => {
+    try {
+      await profileService.deleteImage(imageId);
+      setEditingImages((prev) => prev.filter((img) => img.idImagen !== imageId));
+    } catch {
+      toast.error("Error al eliminar la imagen");
+    }
+  };
+
   const handleSaveEditListing = async () => {
     if (!editingListing) return;
 
     try {
       setEditingLoading(true);
+      for (const file of newImageFiles) {
+        try {
+          const uploaded = await profileService.uploadImage(editingListing.idPublicacion, file);
+          setEditingImages((prev) => [...prev, { idImagen: Date.now(), rutaImagen: uploaded.rutaImagen }]);
+        } catch (imgErr) {
+          console.error("Error subiendo imagen:", imgErr);
+        }
+      }
+      setNewImageFiles([]);
+      setNewImagePreviews([]);
       const updated = await profileService.updateListing(editingListing.idPublicacion, {
         descripcionEstado: editListingData.descripcionEstado,
         precio: editListingData.precio,
@@ -146,84 +271,7 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
     }
   };
 
-  // Mock data para otras funcionalidades
-  const transactions = [
-    {
-      id: "t1",
-      type: "sale",
-      product: "Elden Ring - PS5",
-      buyer: "Juan M.",
-      amount: 35,
-      status: "completed",
-      date: "15 Mar 2026",
-    },
-    {
-      id: "t2",
-      type: "purchase",
-      product: "Silent Hill 2 Remake - PC",
-      seller: "Laura P.",
-      amount: 45,
-      status: "completed",
-      date: "12 Mar 2026",
-    },
-    {
-      id: "t3",
-      type: "exchange",
-      product: "Zelda BOTW ↔️ Mario Kart 8",
-      user: "Pedro Sánchez",
-      amount: 0,
-      status: "completed",
-      date: "10 Mar 2026",
-    },
-  ];
 
-  const shipments = [
-    {
-      id: "s1",
-      trackingNumber: "ES2026031500123",
-      carrier: "Correos Express",
-      product: "Cyberpunk 2077 - PC",
-      status: "in_transit",
-      estimatedDelivery: "18 Mar 2026",
-    },
-    {
-      id: "s2",
-      trackingNumber: "ES2026031200456",
-      carrier: "SEUR",
-      product: "FIFA 24 - PS5",
-      status: "delivered",
-      deliveredDate: "16 Mar 2026",
-    },
-  ];
-
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-700 border-0">Activo</Badge>;
-      case "sold":
-        return <Badge className="bg-gray-100 text-gray-700 border-0">Vendido</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-700 border-0">Pendiente</Badge>;
-      case "hidden":
-        return <Badge className="bg-red-100 text-red-700 border-0">Oculto</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-700 border-0">{status}</Badge>;
-    }
-  };
-
-  const getTransactionStatus = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-green-100 text-green-700 border-0">Completado</Badge>;
-      case "in_transit":
-        return <Badge className="bg-blue-100 text-blue-700 border-0">En tránsito</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-700 border-0">Pendiente</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-700 border-0">{status}</Badge>;
-    }
-  };
 
   const getShipmentStatus = (status: string) => {
     switch (status) {
@@ -248,6 +296,81 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
+      {/* Verification Banner */}
+      {!isVerified && (
+        <div className="bg-gradient-to-r from-blue-600 to-primary py-3 px-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 rounded-full p-1.5">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">Verifica tu cuenta</p>
+                <p className="text-white/80 text-xs">Obtén la insignia de usuario verificado +100 puntos</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setShowVerificationModal(true)}
+              className="bg-white text-primary hover:bg-white/90 text-sm px-4 py-2"
+              disabled={sendingCode}
+            >
+              {sendingCode ? "Enviando..." : "Verificar ahora"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Modal */}
+      {showVerificationModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-2">Verificación de cuenta</h2>
+            <p className="text-gray-600 mb-4 text-sm">
+              Te enviaremos un código de 6 dígitos a tu email ({profile?.email || user?.email})
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Código de verificación
+                </label>
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="123456"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-center text-2xl tracking-widest"
+                />
+                <p className="text-xs text-gray-500 mt-1">El código expira en 30 minutos</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowVerificationModal(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSendVerificationCode}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={sendingCode}
+                >
+                  {sendingCode ? "..." : "Reenviar"}
+                </Button>
+              </div>
+              <Button
+                onClick={handleVerifyCode}
+                className="w-full bg-primary"
+                disabled={verifyingCode || verificationCode.length !== 6}
+              >
+                {verifyingCode ? "Verificando..." : "Verificar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Profile Modal */}
       {editingProfile && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -399,6 +522,53 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
                 </select>
               </div>
 
+              {/* Imágenes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Imágenes ({editingImages.length + newImagePreviews.length}/3)
+                </label>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {editingImages.map((img) => (
+                    <div key={img.idImagen} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100">
+                      <img
+                        src={img.rutaImagen.startsWith("/") ? `http://localhost:8081/api${img.rutaImagen}` : img.rutaImagen}
+                        alt="imagen"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteEditImage(img.idImagen)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {newImagePreviews.map((src, i) => (
+                    <div key={`new-${i}`} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100">
+                      <img src={src} alt="nueva" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewImagePreviews((prev) => prev.filter((_, idx) => idx !== i));
+                          setNewImageFiles((prev) => prev.filter((_, idx) => idx !== i));
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {editingImages.length + newImagePreviews.length < 3 && (
+                    <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition">
+                      <Upload className="w-5 h-5 text-gray-400 mb-1" />
+                      <span className="text-xs text-gray-500">Añadir</span>
+                      <input type="file" accept="image/*" multiple onChange={handleAddEditImage} className="hidden" />
+                    </label>
+                  )}
+                </div>
+              </div>
+
               {/* Estado de la publicación */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Estado de la publicación</label>
@@ -408,8 +578,7 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="ACTIVA">Activa</option>
-                  <option value="PAUSADA">Pausada</option>
-                  <option value="CANCELADA">Cancelada</option>
+                  <option value="DESACTIVADA">Desactivada</option>
                 </select>
               </div>
 
@@ -491,7 +660,9 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
               <div className="flex items-center gap-3">
                 <Star className="w-8 h-8 text-yellow-300" />
                 <div>
-                  <div className="text-2xl font-bold text-white">{(profile.reputacionMedia || 0).toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-white">
+                    {receivedReviews.length > 0 ? (profile.reputacionMedia || 0).toFixed(2) : "—"}
+                  </div>
                   <div className="text-sm text-white/80">Reputación</div>
                 </div>
               </div>
@@ -500,8 +671,8 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
               <div className="flex items-center gap-3">
                 <ShoppingBag className="w-8 h-8 text-white" />
                 <div>
-                  <div className="text-2xl font-bold text-white">{myListings.filter(l => l.estadoPublicacion === "VENDIDA").length}</div>
-                  <div className="text-sm text-white/80">Ventas</div>
+                  <div className="text-2xl font-bold text-white">{myListings.filter(l => l.estadoPublicacion === "ACTIVA").length}</div>
+                  <div className="text-sm text-white/80">Activas</div>
                 </div>
               </div>
             </div>
@@ -521,10 +692,9 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="listings" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="listings">Mis publicaciones</TabsTrigger>
             <TabsTrigger value="transactions">Transacciones</TabsTrigger>
-            <TabsTrigger value="shipments">Envíos</TabsTrigger>
             <TabsTrigger value="reviews">Reseñas</TabsTrigger>
             <TabsTrigger value="points">Puntos</TabsTrigger>
           </TabsList>
@@ -554,8 +724,16 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
                     className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
                   >
                     <div className="flex gap-6">
-                      <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <ShoppingBag className="w-8 h-8 text-gray-400" />
+                      <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {listing.imagenes && listing.imagenes.length > 0 ? (
+                          <img
+                            src={listing.imagenes[0].startsWith("/") ? `http://localhost:8081/api${listing.imagenes[0]}` : listing.imagenes[0]}
+                            alt={listing.producto}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ShoppingBag className="w-8 h-8 text-gray-400" />
+                        )}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
@@ -568,13 +746,11 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
                             </p>
                           </div>
                           <Badge className={
-                            listing.estadoPublicacion === "ACTIVA" 
+                            listing.estadoPublicacion === "ACTIVA"
                               ? "bg-green-100 text-green-700 border-0"
-                              : listing.estadoPublicacion === "VENDIDA"
-                              ? "bg-gray-100 text-gray-700 border-0"
-                              : "bg-red-100 text-red-700 border-0"
+                              : "bg-gray-100 text-gray-700 border-0"
                           }>
-                            {listing.estadoPublicacion}
+                            {listing.estadoPublicacion === "ACTIVA" ? "Activa" : "Desactivada"}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
@@ -617,112 +793,79 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
           {/* Transactions */}
           <TabsContent value="transactions" className="space-y-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Historial de transacciones</h2>
+            {transactions.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">No tienes transacciones aún</p>
+              </div>
+            ) : (
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Tipo
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Producto
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Usuario
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Importe
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Estado
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Fecha
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Importe</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {transactions.map((transaction) => (
-                      <tr key={transaction.id} className="hover:bg-gray-50">
+                    {transactions.map((t) => (
+                      <tr key={t.idTransaccion} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge
-                            className={
-                              transaction.type === "sale"
-                                ? "bg-green-100 text-green-700 border-0"
-                                : transaction.type === "purchase"
-                                ? "bg-blue-100 text-blue-700 border-0"
-                                : "bg-purple-100 text-purple-700 border-0"
-                            }
-                          >
-                            {transaction.type === "sale"
-                              ? "Venta"
-                              : transaction.type === "purchase"
-                              ? "Compra"
-                              : "Intercambio"}
+                          <Badge className={t.rol === "vendedor" ? "bg-green-100 text-green-700 border-0" : "bg-blue-100 text-blue-700 border-0"}>
+                            {t.rol === "vendedor" ? "Venta" : "Compra"}
                           </Badge>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{transaction.product}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{t.productoTitulo || "Producto"}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {transaction.type === "sale"
-                            ? transaction.buyer
-                            : transaction.type === "purchase"
-                            ? transaction.seller
-                            : transaction.user}
+                          {t.rol === "vendedor" ? t.compradorNombre : t.vendedorNombre}
                         </td>
                         <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                          {transaction.amount > 0 ? `${transaction.amount}€` : "-"}
+                          {t.precioFinal > 0 ? `${t.precioFinal}€` : "-"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {getTransactionStatus(transaction.status)}
+                          {t.estado === "COMPLETADA" && <Badge className="bg-green-100 text-green-700 border-0">Completado</Badge>}
+                          {t.estado === "PENDIENTE" && <Badge className="bg-yellow-100 text-yellow-700 border-0">Pendiente</Badge>}
+                          {t.estado === "EN_TRANSITO" && <Badge className="bg-blue-100 text-blue-700 border-0">En tránsito</Badge>}
+                          {t.estado === "CANCELADA" && <Badge className="bg-red-100 text-red-700 border-0">Cancelada</Badge>}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{transaction.date}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {t.fechaTransaccion ? new Date(t.fechaTransaccion).toLocaleDateString("es-ES") : "-"}
+                        </td>
+                        <td className="px-6 py-4">
+                          {t.rol === "vendedor" && t.estado === "PENDIENTE" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={updatingTx === t.idTransaccion}
+                              onClick={() => handleUpdateTransactionStatus(t.idTransaccion, "EN_TRANSITO")}
+                            >
+                              {updatingTx === t.idTransaccion ? "..." : "Marcar enviado"}
+                            </Button>
+                          )}
+                          {t.rol === "comprador" && t.estado === "EN_TRANSITO" && (
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              disabled={updatingTx === t.idTransaccion}
+                              onClick={() => handleUpdateTransactionStatus(t.idTransaccion, "COMPLETADA")}
+                            >
+                              {updatingTx === t.idTransaccion ? "..." : "Confirmar recepción"}
+                            </Button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
-          </TabsContent>
-
-          {/* Shipments */}
-          <TabsContent value="shipments" className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Mis envíos</h2>
-            <div className="grid gap-4">
-              {shipments.map((shipment) => (
-                <div
-                  key={shipment.id}
-                  className="bg-white rounded-xl border border-gray-200 p-6"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Truck className="w-8 h-8 text-primary" />
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{shipment.product}</h3>
-                        <p className="text-sm text-gray-600">
-                          {shipment.carrier} • {shipment.trackingNumber}
-                        </p>
-                      </div>
-                    </div>
-                    {getShipmentStatus(shipment.status)}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      {shipment.status === "delivered"
-                        ? `Entregado el ${shipment.deliveredDate}`
-                        : `Entrega estimada: ${shipment.estimatedDelivery}`}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onNavigate("tracking")}
-                    >
-                      Rastrear envío
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            )}
           </TabsContent>
 
           {/* Reviews */}
@@ -800,7 +943,7 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <Star className="w-5 h-5 text-primary" />
-                    <span className="text-gray-700">Por cada reseña positiva recibida</span>
+                    <span className="text-gray-700">Por cada reseña positiva recibida (4-5 estrellas)</span>
                   </div>
                   <span className="font-bold text-primary">+25 puntos</span>
                 </div>
@@ -816,23 +959,67 @@ export function UserProfilePage({ onNavigate, userRole = "registered" }: UserPro
 
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Canjear puntos</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-primary transition-colors cursor-pointer">
-                  <div className="text-lg font-bold text-gray-900 mb-2">500 puntos</div>
-                  <div className="text-gray-600 mb-3">Descuento 5€ en tu próxima compra</div>
-                  <Button className="w-full" variant="outline">
-                    Canjear
-                  </Button>
-                </div>
-                <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-primary transition-colors cursor-pointer">
-                  <div className="text-lg font-bold text-gray-900 mb-2">1000 puntos</div>
-                  <div className="text-gray-600 mb-3">Envío gratis en tu próximo pedido</div>
-                  <Button className="w-full" variant="outline">
-                    Canjear
-                  </Button>
-                </div>
+              <div className="grid md:grid-cols-1 gap-4 max-w-md mx-auto">
+                {([
+                  { tipo: "DESCUENTO_5", puntos: 500, titulo: "500 puntos", descripcion: "Descuento 5€ en tu próxima compra" },
+                ] as const).map((oferta) => {
+                  const suficientes = (profile.puntosAcumulados || 0) >= oferta.puntos;
+                  return (
+                    <div
+                      key={oferta.tipo}
+                      className={`border-2 rounded-lg p-4 transition-colors ${
+                        suficientes ? "border-gray-200 hover:border-primary cursor-pointer" : "border-gray-100 opacity-60"
+                      }`}
+                    >
+                      <div className="text-lg font-bold text-gray-900 mb-2">{oferta.titulo}</div>
+                      <div className="text-gray-600 mb-3">{oferta.descripcion}</div>
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        disabled={!suficientes || canjeLoading === oferta.tipo}
+                        onClick={async () => {
+                          setCanjeLoading(oferta.tipo);
+                          try {
+                            const result = await profileService.canjearPuntos(user!.idUsuario!, oferta.tipo);
+                            setProfile((p: any) => ({ ...p, puntosAcumulados: result.puntosRestantes }));
+                            setRedemptionModal({ codigo: result.codigo, descripcion: result.descripcion, puntosUsados: result.puntosUsados });
+                          } catch (e: any) {
+                            toast.error(e?.response?.data?.message || "Error al canjear puntos");
+                          } finally {
+                            setCanjeLoading(null);
+                          }
+                        }}
+                      >
+                        {canjeLoading === oferta.tipo ? "Canjeando..." : suficientes ? "Canjear" : `Faltan ${oferta.puntos - (profile.puntosAcumulados || 0)} puntos`}
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Modal código de canje */}
+            {redemptionModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setRedemptionModal(null)}>
+                <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Trophy className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">¡Canje exitoso!</h3>
+                    <p className="text-gray-600 mb-6">{redemptionModal.descripcion}</p>
+                    <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                      <p className="text-sm text-gray-500 mb-2">Tu código de descuento</p>
+                      <div className="text-2xl font-mono font-bold text-primary tracking-widest">
+                        {redemptionModal.codigo}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-6">Guarda este código y úsalo en tu próximo pedido. Se han descontado <strong>{redemptionModal.puntosUsados} puntos</strong> de tu cuenta.</p>
+                    <Button className="w-full" onClick={() => setRedemptionModal(null)}>Cerrar</Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

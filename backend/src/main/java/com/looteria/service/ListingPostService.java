@@ -41,7 +41,14 @@ public class ListingPostService {
     public List<SearchListingDTO> getActiveListings() {
         List<SearchListingDTO> results = new ArrayList<>();
         for (ListingSearchProjection p : listingPostRepository.findAllActiveListings()) {
-            results.add(mapToSearchDTO(p));
+            SearchListingDTO dto = mapToSearchDTO(p);
+            List<Image> imgs = StreamSupport.stream(
+                    imageRepository.findByPublicacion_IdPublicacion(p.getIdPublicacion()).spliterator(), false)
+                    .collect(Collectors.toList());
+            if (!imgs.isEmpty()) {
+                dto.setImagenUrl(imgs.get(0).getRutaImagen());
+            }
+            results.add(dto);
         }
         return results;
     }
@@ -62,7 +69,6 @@ public class ListingPostService {
             dto.setFechaCreacion(listing.getFechaCreacion());
             dto.setEstadoPublicacion(listing.getEstadoPublicacion() != null
                     ? listing.getEstadoPublicacion().name() : null);
-            dto.setEnvio(listing.getEnvio());
 
             // Categorías
             if (listing.getEstadoArticulo() != null) {
@@ -150,7 +156,6 @@ public class ListingPostService {
         listing.setDescripcionEstado(descripcionEstado);
         listing.setFechaCreacion(LocalDateTime.now());
         listing.setEstadoPublicacion(ListingPost.PublicationStatus.ACTIVA);
-        listing.setEnvio(false);
 
         if (estado != null && !estado.isEmpty()) {
             categoryRepository.findFirstByNombreAndTipo(estado, "ESTADO_ARTICULO")
@@ -171,8 +176,8 @@ public class ListingPostService {
     // ─── Actualizar publicación ──────────────────────────────────────────────────
 
     @Transactional
-    public ListingPost updateListing(Long listingId, String descripcionEstado, 
-                                     BigDecimal precio, String tipoTransaccion, Boolean envio) {
+    public ListingPost updateListing(Long listingId, String descripcionEstado,
+                                     BigDecimal precio, String tipoTransaccion) {
         ListingPost listing = listingPostRepository.findById(listingId)
                 .orElseThrow(() -> new RuntimeException("Publicación no encontrada"));
 
@@ -184,9 +189,6 @@ public class ListingPostService {
         }
         if (tipoTransaccion != null) {
             listing.setTipoTransaccion(ListingPost.TransactionType.valueOf(tipoTransaccion));
-        }
-        if (envio != null) {
-            listing.setEnvio(envio);
         }
 
         return listingPostRepository.save(listing);
@@ -204,20 +206,21 @@ public class ListingPostService {
     // ─── Helpers ─────────────────────────────────────────────────────────────────
 
     private SearchListingDTO mapToSearchDTO(ListingSearchProjection p) {
-        return new SearchListingDTO(
-                p.getIdPublicacion(),
-                p.getIdProducto(),
-                p.getTitulo(),
-                p.getDescripcion(),
-                p.getPlataformaNombre()      != null ? p.getPlataformaNombre()      : "Desconocida",
-                p.getTipoArticuloNombre()    != null ? p.getTipoArticuloNombre()    : "Desconocido",
-                p.getPrecio(),
-                p.getEstadoArticuloNombre()  != null ? p.getEstadoArticuloNombre()  : "Desconocido",
-                p.getTipoTransaccion()       != null ? p.getTipoTransaccion()       : "VENTA",
-                p.getRegionNombre()          != null ? p.getRegionNombre()          : "No especificado",
-                p.getNombreUsuario()         != null ? p.getNombreUsuario()         : "Anónimo",
-                p.getDescripcionEstado(),
-                p.getIdiomaNombre()          != null ? p.getIdiomaNombre()          : "No especificado",
-                p.getFechaCreacion());
+        SearchListingDTO dto = new SearchListingDTO();
+        dto.setIdPublicacion(p.getIdPublicacion());
+        dto.setIdProducto(p.getIdProducto());
+        dto.setTitulo(p.getTitulo());
+        dto.setDescripcion(p.getDescripcion());
+        dto.setPlataforma(p.getPlataformaNombre()     != null ? p.getPlataformaNombre()     : "Desconocida");
+        dto.setTipoArticulo(p.getTipoArticuloNombre() != null ? p.getTipoArticuloNombre()   : "Desconocido");
+        dto.setPrecio(p.getPrecio());
+        dto.setEstadoArticulo(p.getEstadoArticuloNombre() != null ? p.getEstadoArticuloNombre() : "Desconocido");
+        dto.setTipoTransaccion(p.getTipoTransaccion() != null ? p.getTipoTransaccion()      : "VENTA");
+        dto.setRegion(p.getRegionNombre()             != null ? p.getRegionNombre()          : "No especificado");
+        dto.setUsuario(p.getNombreUsuario()           != null ? p.getNombreUsuario()         : "Anónimo");
+        dto.setDescripcionEstado(p.getDescripcionEstado());
+        dto.setIdioma(p.getIdiomaNombre()             != null ? p.getIdiomaNombre()          : "No especificado");
+        dto.setFechaCreacion(p.getFechaCreacion());
+        return dto;
     }
 }

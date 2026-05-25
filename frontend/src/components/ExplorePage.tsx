@@ -10,11 +10,13 @@ interface ExplorePageProps {
 
 // Convertir SearchListing a Game para compatibilidad con GameCard
 const listingToGame = (listing: SearchListing): any => ({
-  id: listing.idProducto?.toString() || "",
+  id: listing.idPublicacion?.toString() || "",
   title: listing.titulo,
   console: listing.plataforma,
   condition: listing.estadoArticulo,
-  image: "https://images.unsplash.com/photo-1593024579758-6221e85efbe6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
+  image: listing.imagenUrl
+    ? (listing.imagenUrl.startsWith("/") ? `http://localhost:8081/api${listing.imagenUrl}` : listing.imagenUrl)
+    : "https://images.unsplash.com/photo-1593024579758-6221e85efbe6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
   location: listing.region,
   rating: 4.5,
   price: listing.precio,

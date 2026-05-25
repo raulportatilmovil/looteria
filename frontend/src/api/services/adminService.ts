@@ -30,6 +30,29 @@ export interface ListingDetailDTO {
   fechaCreacion: string;
   estadoPublicacion: string;
   envio: boolean;
+  destacado: boolean;
+}
+
+export interface DashboardStatsDTO {
+  totalUsuarios: number;
+  usuariosVerificados: number;
+  publicacionesActivas: number;
+  transaccionesCompletadas: number;
+}
+
+export interface TransactionDTO {
+  idTransaccion: number;
+  publicacionId: number;
+  productoTitulo: string;
+  compradorId: number;
+  compradorNombre: string;
+  vendedorId: number;
+  vendedorNombre: string;
+  tipo: string;
+  precioFinal: number;
+  comision: number;
+  estado: string;
+  fechaTransaccion: string;
 }
 
 export const adminService = {
@@ -61,6 +84,16 @@ export const adminService = {
 
   deleteListing: async (id: number) => {
     return await axiosInstance.delete(`/admin/publicaciones/${id}`);
+  },
+
+  // DASHBOARD
+  getDashboardStats: async () => {
+    return await axiosInstance.get<DashboardStatsDTO>('/admin/dashboard/stats');
+  },
+
+  // TRANSACCIONES
+  getAllTransactions: async () => {
+    return await axiosInstance.get<TransactionDTO[]>('/transacciones/all');
   }
 };
 

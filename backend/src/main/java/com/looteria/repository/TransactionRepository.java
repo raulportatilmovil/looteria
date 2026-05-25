@@ -6,10 +6,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-    
+
     Iterable<Transaction> findByComprador_IdUsuario(Long compradorId);
-    
+
     Iterable<Transaction> findByVendedor_IdUsuario(Long vendedorId);
-    
+
     Iterable<Transaction> findByPublicacion_IdPublicacion(Long publicacionId);
+
+    long countByEstado(Transaction.TransactionStatus estado);
 }

@@ -1,6 +1,7 @@
 package com.looteria.controller;
 
 import com.looteria.dto.CreateTransactionRequestDTO;
+import com.looteria.dto.TransactionDTO;
 import com.looteria.entity.Transaction;
 import com.looteria.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,11 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/transacciones")
-@CrossOrigin(origins = "*")
 public class TransactionController {
 
     @Autowired
@@ -24,7 +23,13 @@ public class TransactionController {
     @PostMapping
     public ResponseEntity<?> createTransaction(@RequestBody CreateTransactionRequestDTO request) {
         try {
-            Transaction transaction = transactionService.createTransaction(
+            System.out.println("=== Creando transacción ===");
+            System.out.println("publicacionId: " + request.getPublicacionId());
+            System.out.println("compradorId: " + request.getCompradorId());
+            System.out.println("vendedorId: " + request.getVendedorId());
+            System.out.println("tipo: " + request.getTipo());
+            System.out.println("precioFinal: " + request.getPrecioFinal());
+            TransactionDTO transaction = transactionService.createTransaction(
                     request.getPublicacionId(),
                     request.getCompradorId(),
                     request.getVendedorId(),
@@ -33,6 +38,7 @@ public class TransactionController {
             );
             return ResponseEntity.status(HttpStatus.CREATED).body(transaction);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse(e.getMessage()));
         }
@@ -43,7 +49,7 @@ public class TransactionController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getTransactionById(@PathVariable Long id) {
         try {
-            Optional<Transaction> transaction = transactionService.getTransactionById(id);
+            Optional<TransactionDTO> transaction = transactionService.getTransactionById(id);
             if (transaction.isPresent()) {
                 return ResponseEntity.ok(transaction.get());
             }
@@ -60,9 +66,7 @@ public class TransactionController {
     @GetMapping("/comprador/{compradorId}")
     public ResponseEntity<?> getTransactionsByBuyer(@PathVariable Long compradorId) {
         try {
-            List<Transaction> transactions = StreamSupport.stream(
-                    transactionService.getTransactionsByBuyer(compradorId).spliterator(), false
-            ).toList();
+            List<TransactionDTO> transactions = transactionService.getTransactionsByBuyer(compradorId);
             return ResponseEntity.ok(transactions);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -75,9 +79,20 @@ public class TransactionController {
     @GetMapping("/vendedor/{vendedorId}")
     public ResponseEntity<?> getTransactionsBySeller(@PathVariable Long vendedorId) {
         try {
-            List<Transaction> transactions = StreamSupport.stream(
-                    transactionService.getTransactionsBySeller(vendedorId).spliterator(), false
-            ).toList();
+            List<TransactionDTO> transactions = transactionService.getTransactionsBySeller(vendedorId);
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // ─── Obtener todas las transacciones (admin) ─────────────────────────────────
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllTransactions() {
+        try {
+            List<TransactionDTO> transactions = transactionService.getAllTransactions();
             return ResponseEntity.ok(transactions);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -90,7 +105,7 @@ public class TransactionController {
     @PutMapping("/{id}/estado")
     public ResponseEntity<?> updateTransactionStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest request) {
         try {
-            Transaction transaction = transactionService.updateTransactionStatus(id, request.getEstado());
+            TransactionDTO transaction = transactionService.updateTransactionStatus(id, request.getEstado());
             return ResponseEntity.ok(transaction);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

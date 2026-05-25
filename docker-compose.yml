@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: looteria-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: looteria
+      MYSQL_USER: looteria_user
+      MYSQL_PASSWORD: looteria_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/database.sql:/docker-entrypoint-initdb.d/database.sql
+    networks:
+      - looteria-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: looteria-backend
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/looteria
+      SPRING_DATASOURCE_USERNAME: looteria_user
+      SPRING_DATASOURCE_PASSWORD: looteria_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      - mysql
+    networks:
+      - looteria-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: looteria-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - looteria-network
+
+volumes:
+  mysql_data:
+
+networks:
+  looteria-network:
+    driver: bridge

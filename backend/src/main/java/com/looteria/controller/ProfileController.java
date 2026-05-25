@@ -4,6 +4,7 @@ import com.looteria.dto.ListingDetailDTO;
 import com.looteria.dto.ReviewDTO;
 import com.looteria.entity.User;
 import com.looteria.service.ListingAdminService;
+import com.looteria.service.PointsService;
 import com.looteria.service.ReviewService;
 import com.looteria.service.UserService;
 import com.looteria.entity.ListingPost;
@@ -21,7 +22,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/perfil")
-@CrossOrigin(origins = "*")
 public class ProfileController {
     
     @Autowired
@@ -38,6 +38,9 @@ public class ProfileController {
 
     @Autowired
     private ReviewService reviewService;
+
+    @Autowired
+    private PointsService pointsService;
     
     /**
      * GET /perfil/datos/{userId} - Obtener datos del perfil del usuario
@@ -128,6 +131,24 @@ public class ProfileController {
         }
     }
     
+    /**
+     * POST /perfil/canjear-puntos - Canjear puntos por un beneficio
+     */
+    @PostMapping("/canjear-puntos")
+    public ResponseEntity<Map<String, Object>> canjearPuntos(@RequestBody Map<String, Object> request) {
+        try {
+            Long userId = Long.valueOf(request.get("userId").toString());
+            String tipoCanje = request.get("tipoCanje").toString();
+            Map<String, Object> result = pointsService.canjearPuntos(userId, tipoCanje);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("status", "ERROR");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+    }
+
     /**
      * GET /perfil/resenas-recibidas/{userId} - Reseñas recibidas por el usuario
      */

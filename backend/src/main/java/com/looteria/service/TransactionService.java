@@ -1,5 +1,6 @@
 package com.looteria.service;
 
+import com.looteria.dto.TransactionDTO;
 import com.looteria.entity.ListingPost;
 import com.looteria.entity.Transaction;
 import com.looteria.entity.User;
@@ -12,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @Service
 public class TransactionService {
@@ -27,7 +30,7 @@ public class TransactionService {
     private UserRepository userRepository;
 
     @Transactional
-    public Transaction createTransaction(Long publicacionId, Long compradorId, Long vendedorId,
+    public TransactionDTO createTransaction(Long publicacionId, Long compradorId, Long vendedorId,
                                         String tipo, BigDecimal precioFinal) {
         ListingPost listing = listingPostRepository.findById(publicacionId)
                 .orElseThrow(() -> new RuntimeException("Publicación no encontrada"));
@@ -53,33 +56,70 @@ public class TransactionService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        listing.setEstadoPublicacion(ListingPost.PublicationStatus.VENDIDA);
-        listingPostRepository.save(listing);
+        // La publicación NO se marca como VENDIDA todavía
+        // Se marcará cuando el vendedor confirme el envío (EN_TRANSITO)
 
-        return savedTransaction;
+        return mapToDTO(savedTransaction);
     }
 
     @Transactional(readOnly = true)
-    public Optional<Transaction> getTransactionById(Long id) {
-        return transactionRepository.findById(id);
+    public Optional<TransactionDTO> getTransactionById(Long id) {
+        return transactionRepository.findById(id).map(this::mapToDTO);
     }
 
     @Transactional(readOnly = true)
-    public Iterable<Transaction> getTransactionsByBuyer(Long buyerId) {
-        return transactionRepository.findByComprador_IdUsuario(buyerId);
+    public List<TransactionDTO> getTransactionsByBuyer(Long buyerId) {
+        return StreamSupport.stream(
+                transactionRepository.findByComprador_IdUsuario(buyerId).spliterator(), false
+        ).map(this::mapToDTO).toList();
     }
 
     @Transactional(readOnly = true)
-    public Iterable<Transaction> getTransactionsBySeller(Long sellerId) {
-        return transactionRepository.findByVendedor_IdUsuario(sellerId);
+    public List<TransactionDTO> getTransactionsBySeller(Long sellerId) {
+        return StreamSupport.stream(
+                transactionRepository.findByVendedor_IdUsuario(sellerId).spliterator(), false
+        ).map(this::mapToDTO).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionDTO> getAllTransactions() {
+        return StreamSupport.stream(
+                transactionRepository.findAll().spliterator(), false
+        ).map(this::mapToDTO).toList();
     }
 
     @Transactional
-    public Transaction updateTransactionStatus(Long transactionId, String newStatus) {
+    public TransactionDTO updateTransactionStatus(Long transactionId, String newStatus) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Transacción no encontrada"));
 
-        transaction.setEstado(Transaction.TransactionStatus.valueOf(newStatus));
-        return transactionRepository.save(transaction);
+        Transaction.TransactionStatus status = Transaction.TransactionStatus.valueOf(newStatus);
+        transaction.setEstado(status);
+        Transaction saved = transactionRepository.save(transaction);
+
+        if (status == Transaction.TransactionStatus.COMPLETADA) {
+            User vendedor = transaction.getVendedor();
+            vendedor.setPuntosAcumulados(vendedor.getPuntosAcumulados() + 50L);
+            userRepository.save(vendedor);
+        }
+        return mapToDTO(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public TransactionDTO mapToDTO(Transaction t) {
+        TransactionDTO dto = new TransactionDTO();
+        dto.setIdTransaccion(t.getIdTransaccion());
+        dto.setPublicacionId(t.getPublicacion().getIdPublicacion());
+        dto.setProductoTitulo(t.getPublicacion().getProducto() != null ? t.getPublicacion().getProducto().getTitulo() : "");
+        dto.setCompradorId(t.getComprador().getIdUsuario());
+        dto.setCompradorNombre(t.getComprador().getNombreUsuario());
+        dto.setVendedorId(t.getVendedor().getIdUsuario());
+        dto.setVendedorNombre(t.getVendedor().getNombreUsuario());
+        dto.setTipo(t.getTipo().name());
+        dto.setPrecioFinal(t.getPrecioFinal());
+        dto.setComision(t.getComision());
+        dto.setEstado(t.getEstado().name());
+        dto.setFechaTransaccion(t.getFechaTransaccion());
+        return dto;
     }
 }

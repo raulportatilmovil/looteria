@@ -13,7 +13,6 @@ import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/intercambios")
-@CrossOrigin(origins = "*")
 public class ExchangeController {
 
     @Autowired

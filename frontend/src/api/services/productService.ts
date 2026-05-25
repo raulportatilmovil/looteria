@@ -26,6 +26,7 @@ export interface SearchListing {
   descripcionEstado: string | null;
   idioma: string;
   fechaCreacion: string;
+  imagenUrl?: string;
 }
 
 export const productService = {

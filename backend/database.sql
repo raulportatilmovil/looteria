@@ -254,7 +254,8 @@ CREATE TABLE `publicaciones` (
   `region_id` bigint(20) DEFAULT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
   `estado_publicacion` enum('ACTIVA','VENDIDA','CANCELADA','PAUSADA') DEFAULT 'ACTIVA',
-  `envio` tinyint(1) DEFAULT 0
+  `envio` tinyint(1) DEFAULT 0,
+  `destacado` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -606,6 +607,23 @@ ALTER TABLE `verificaciones`
   ADD CONSTRAINT `verificaciones_ibfk_1` FOREIGN KEY (`id_transaccion`) REFERENCES `transacciones` (`id_transaccion`) ON DELETE CASCADE,
   ADD CONSTRAINT `verificaciones_ibfk_2` FOREIGN KEY (`id_publicacion`) REFERENCES `publicaciones` (`id_publicacion`) ON DELETE CASCADE,
   ADD CONSTRAINT `verificaciones_ibfk_3` FOREIGN KEY (`id_admin_verificador`) REFERENCES `usuarios` (`id_usuario`) ON DELETE SET NULL;
+
+--
+-- Estructura de tabla para la tabla `verification_codes`
+--
+
+CREATE TABLE `verification_codes` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `codigo` varchar(10) NOT NULL,
+  `fecha_creacion` datetime NOT NULL,
+  `fecha_expiracion` datetime NOT NULL,
+  `usado` tinyint(1) NOT NULL DEFAULT 0,
+  `id_usuario` bigint(20) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_usuario` (`id_usuario`),
+  CONSTRAINT `verification_codes_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
