@@ -1,10 +1,11 @@
 # Build stage
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
-ARG BUILD_DATE
+# Force cache invalidation
+RUN echo "Build timestamp: $(date)" > /tmp/build_timestamp
 COPY pom.xml .
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests && rm -rf /root/.m2/repository
 
 # Runtime stage
 FROM eclipse-temurin:17-jre
