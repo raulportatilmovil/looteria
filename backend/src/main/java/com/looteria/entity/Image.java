@@ -24,6 +24,9 @@ public class Image {
     @Column(name = "ruta_imagen", nullable = false)
     private String rutaImagen;
     
+    @Column(name = "public_id")
+    private String publicId;
+    
     @Column(name = "descripcion")
     private String descripcion;
     

@@ -1,22 +1,20 @@
 package com.looteria.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.looteria.entity.Image;
 import com.looteria.entity.ListingPost;
 import com.looteria.repository.ImageRepository;
 import com.looteria.repository.ListingPostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @Service
 public class ImageService {
@@ -27,8 +25,8 @@ public class ImageService {
     @Autowired
     private ListingPostRepository listingPostRepository;
 
-    @Value("${upload.dir:uploads}")
-    private String uploadDir;
+    @Autowired
+    private Cloudinary cloudinary;
 
     @Transactional
     public String uploadImage(Long listingId, MultipartFile file) throws IOException {
@@ -40,28 +38,17 @@ public class ImageService {
             throw new RuntimeException("Máximo 3 imágenes por publicación");
         }
 
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String extension = "";
-        String originalName = file.getOriginalFilename();
-        if (originalName != null && originalName.contains(".")) {
-            extension = originalName.substring(originalName.lastIndexOf("."));
-        }
-        String fileName = UUID.randomUUID().toString() + extension;
-        Path filePath = uploadPath.resolve(fileName);
-        Files.copy(file.getInputStream(), filePath);
-
-        String rutaImagen = "/imagenes/serve/" + fileName;
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+        String imageUrl = (String) uploadResult.get("url");
+        String publicId = (String) uploadResult.get("public_id");
 
         Image image = new Image();
         image.setPublicacion(listing);
-        image.setRutaImagen(rutaImagen);
+        image.setRutaImagen(imageUrl);
+        image.setPublicId(publicId);
         imageRepository.save(image);
 
-        return rutaImagen;
+        return imageUrl;
     }
 
     @Transactional(readOnly = true)
@@ -79,11 +66,9 @@ public class ImageService {
         Image image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new RuntimeException("Imagen no encontrada"));
 
-        String ruta = image.getRutaImagen();
-        if (ruta != null) {
-            String fileName = ruta.contains("/") ? ruta.substring(ruta.lastIndexOf("/") + 1) : ruta;
-            Path filePath = Paths.get(uploadDir).resolve(fileName);
-            Files.deleteIfExists(filePath);
+        String publicId = image.getPublicId();
+        if (publicId != null) {
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
         }
 
         imageRepository.deleteById(imageId);

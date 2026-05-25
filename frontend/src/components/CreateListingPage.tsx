@@ -66,7 +66,6 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
         throw new Error("El precio debe ser mayor a 0");
       }
 
-      console.log('Precio a enviar:', formData.precio, typeof formData.precio);
       const listing = await profileService.createListing(user.idUsuario, formData);
       const listingId = listing?.idPublicacion;
       if (listingId && imageFiles.length > 0) {
