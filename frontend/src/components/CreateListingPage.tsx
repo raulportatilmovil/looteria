@@ -66,6 +66,7 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
         throw new Error("El precio debe ser mayor a 0");
       }
 
+      console.log('Precio a enviar:', formData.precio, typeof formData.precio);
       const listing = await profileService.createListing(user.idUsuario, formData);
       const listingId = listing?.idPublicacion;
       if (listingId && imageFiles.length > 0) {
@@ -210,12 +211,13 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
                     min="0"
                     placeholder="0.00"
                     value={formData.precio}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const value = e.target.value;
                       setFormData({
                         ...formData,
-                        precio: parseFloat(e.target.value),
+                        precio: value === '' ? 0 : parseFloat(value),
                       })
-                    }
+                    }}
                     className="w-full"
                   />
                   <div className="px-4 py-2 bg-gray-100 rounded-lg flex items-center font-semibold">
