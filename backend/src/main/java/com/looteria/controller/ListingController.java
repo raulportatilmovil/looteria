@@ -46,9 +46,10 @@ public ResponseEntity<?> getListingById(@PathVariable Long id) {
         try {
             ListingPost listing = listingPostService.createListing(
                     request.getUserId(),
-                    request.getProducto(),
+                    request.getTitulo(),
                     request.getDescripcion(),
                     request.getPlataforma(),
+                    request.getTipoArticulo(),
                     request.getTipoTransaccion(),
                     request.getPrecio(),
                     request.getEstado(),
@@ -68,6 +69,7 @@ public ResponseEntity<?> getListingById(@PathVariable Long id) {
         try {
             ListingPost listing = listingPostService.updateListing(
                     id,
+                    request.getTitulo(),
                     request.getDescripcionEstado(),
                     request.getPrecio(),
                     request.getTipoTransaccion());

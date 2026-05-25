@@ -173,7 +173,10 @@ public class ProfileController {
             }
             
             ListingPost listing = optListing.get();
-            
+
+            if (request.containsKey("titulo") && request.get("titulo") != null && !request.get("titulo").isEmpty()) {
+                listing.setTitulo(request.get("titulo"));
+            }
             if (request.containsKey("descripcionEstado")) {
                 listing.setDescripcionEstado(request.get("descripcionEstado"));
             }

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 public class UpdateListingRequestDTO {
+    private String titulo;
     private String descripcionEstado;
     private BigDecimal precio;
     private String tipoTransaccion;

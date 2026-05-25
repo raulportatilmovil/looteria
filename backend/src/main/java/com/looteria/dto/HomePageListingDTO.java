@@ -6,7 +6,6 @@ import java.util.List;
 
 public class HomePageListingDTO {
     private Long idPublicacion;
-    private Long idProducto;
     private String titulo;
     private String descripcion;
     private String plataformaNombre;
@@ -24,13 +23,12 @@ public class HomePageListingDTO {
 
     public HomePageListingDTO() {}
 
-    public HomePageListingDTO(Long idPublicacion, Long idProducto, String titulo, String descripcion,
+    public HomePageListingDTO(Long idPublicacion, String titulo, String descripcion,
                                String plataformaNombre, String tipoArticuloNombre, BigDecimal precio,
                                String estadoArticuloNombre, String tipoTransaccion, String regionNombre,
                                String nombreUsuario, String descripcionEstado, String idiomaNombre,
                                LocalDateTime fechaCreacion) {
         this.idPublicacion = idPublicacion;
-        this.idProducto = idProducto;
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.plataformaNombre = plataformaNombre;
@@ -48,9 +46,6 @@ public class HomePageListingDTO {
     // Getters and Setters
     public Long getIdPublicacion() { return idPublicacion; }
     public void setIdPublicacion(Long idPublicacion) { this.idPublicacion = idPublicacion; }
-
-    public Long getIdProducto() { return idProducto; }
-    public void setIdProducto(Long idProducto) { this.idProducto = idProducto; }
 
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }

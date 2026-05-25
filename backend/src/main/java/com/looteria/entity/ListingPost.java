@@ -21,11 +21,21 @@ public class ListingPost {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private User usuario;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_producto", nullable = false)
-    private Product producto;
-    
+
+    @Column(name = "titulo")
+    private String titulo;
+
+    @Column(name = "descripcion", columnDefinition = "TEXT")
+    private String descripcion;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "plataforma_id")
+    private Category plataforma;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tipo_articulo_id")
+    private Category tipoArticulo;
+
     @Column(name = "tipo_transaccion", nullable = false)
     @Enumerated(EnumType.STRING)
     private TransactionType tipoTransaccion;

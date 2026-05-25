@@ -25,14 +25,13 @@ public class ListingDetailDTO {
     private String idioma;
     private String region;
 
-    // Producto
+    // Publicación
     private String titulo;
     private String producto;        
     private String descripcion;
     private String especificaciones; 
     private String plataforma;
     private String tipoArticulo;
-    private LocalDateTime fechaLanzamiento;
 
     // Usuario
     private Long idUsuario;

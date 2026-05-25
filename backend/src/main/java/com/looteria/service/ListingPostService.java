@@ -27,9 +27,6 @@ public class ListingPostService {
     private UserRepository userRepository;
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
     private CategoryRepository categoryRepository;
 
     @Autowired
@@ -81,20 +78,15 @@ public class ListingPostService {
             if (listing.getIdioma() != null)
                 dto.setIdioma(listing.getIdioma().getNombre());
 
-            // Producto
-            if (listing.getProducto() != null) {
-                Product p = listing.getProducto();
-                dto.setTitulo(p.getTitulo());
-                dto.setProducto(p.getTitulo());          
-                dto.setDescripcion(p.getDescripcion());
-                dto.setEspecificaciones(p.getDescripcion());
-
-                if (p.getPlataforma() != null)
-                    dto.setPlataforma(p.getPlataforma().getNombre());
-                if (p.getTipoArticulo() != null)
-                    dto.setTipoArticulo(p.getTipoArticulo().getNombre());
-                dto.setFechaLanzamiento(p.getFechaLanzamiento());
-            }
+            // Campos directos de publicación
+            dto.setTitulo(listing.getTitulo());
+            dto.setProducto(listing.getTitulo());
+            dto.setDescripcion(listing.getDescripcion());
+            dto.setEspecificaciones(listing.getDescripcion());
+            if (listing.getPlataforma() != null)
+                dto.setPlataforma(listing.getPlataforma().getNombre());
+            if (listing.getTipoArticulo() != null)
+                dto.setTipoArticulo(listing.getTipoArticulo().getNombre());
 
             // Usuario
             if (listing.getUsuario() != null) {
@@ -125,38 +117,32 @@ public class ListingPostService {
     // ─── Crear publicación ───────────────────────────────────────────────────────
 
     @Transactional
-    public ListingPost createListing(Long userId, String producto, String descripcion,
-            String plataforma, String tipoTransaccion, BigDecimal precio,
+    public ListingPost createListing(Long userId, String titulo, String descripcion,
+            String plataforma, String tipoArticulo, String tipoTransaccion, BigDecimal precio,
             String estado, String descripcionEstado, String especificaciones,
             String idioma, String region) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Product product = productRepository
-                .findByTituloContainingIgnoreCase(producto)
-                .stream()
-                .findFirst()
-                .orElseGet(() -> {
-                    Product newProduct = new Product();
-                    newProduct.setTitulo(producto);
-                    newProduct.setDescripcion(descripcion);
-                    if (plataforma != null && !plataforma.isEmpty()) {
-                        categoryRepository.findFirstByNombreAndTipo(plataforma, "PLATAFORMA")
-                                .ifPresent(newProduct::setPlataforma);
-                    }
-                    return productRepository.save(newProduct);
-                });
-
         ListingPost listing = new ListingPost();
         listing.setUsuario(user);
-        listing.setProducto(product);
+        listing.setTitulo(titulo);
+        listing.setDescripcion(descripcion);
         listing.setTipoTransaccion(ListingPost.TransactionType.valueOf(tipoTransaccion));
         listing.setPrecio(precio);
         listing.setDescripcionEstado(descripcionEstado);
         listing.setFechaCreacion(LocalDateTime.now());
         listing.setEstadoPublicacion(ListingPost.PublicationStatus.ACTIVA);
 
+        if (plataforma != null && !plataforma.isEmpty()) {
+            categoryRepository.findFirstByNombreAndTipo(plataforma, "PLATAFORMA")
+                    .ifPresent(listing::setPlataforma);
+        }
+        if (tipoArticulo != null && !tipoArticulo.isEmpty()) {
+            categoryRepository.findFirstByNombreAndTipo(tipoArticulo, "TIPO_ARTICULO")
+                    .ifPresent(listing::setTipoArticulo);
+        }
         if (estado != null && !estado.isEmpty()) {
             categoryRepository.findFirstByNombreAndTipo(estado, "ESTADO_ARTICULO")
                     .ifPresent(listing::setEstadoArticulo);
@@ -176,11 +162,14 @@ public class ListingPostService {
     // ─── Actualizar publicación ──────────────────────────────────────────────────
 
     @Transactional
-    public ListingPost updateListing(Long listingId, String descripcionEstado,
+    public ListingPost updateListing(Long listingId, String titulo, String descripcionEstado,
                                      BigDecimal precio, String tipoTransaccion) {
         ListingPost listing = listingPostRepository.findById(listingId)
                 .orElseThrow(() -> new RuntimeException("Publicación no encontrada"));
 
+        if (titulo != null && !titulo.isEmpty()) {
+            listing.setTitulo(titulo);
+        }
         if (descripcionEstado != null) {
             listing.setDescripcionEstado(descripcionEstado);
         }
@@ -208,7 +197,6 @@ public class ListingPostService {
     private SearchListingDTO mapToSearchDTO(ListingSearchProjection p) {
         SearchListingDTO dto = new SearchListingDTO();
         dto.setIdPublicacion(p.getIdPublicacion());
-        dto.setIdProducto(p.getIdProducto());
         dto.setTitulo(p.getTitulo());
         dto.setDescripcion(p.getDescripcion());
         dto.setPlataforma(p.getPlataformaNombre()     != null ? p.getPlataformaNombre()     : "Desconocida");

@@ -8,9 +8,10 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class CreateListingRequestDTO {
     private Long userId;
-    private String producto;
+    private String titulo;
     private String descripcion;
     private String plataforma;
+    private String tipoArticulo;
     private String tipoTransaccion;
     private BigDecimal precio;
     private String estado;

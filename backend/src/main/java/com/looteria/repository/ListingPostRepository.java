@@ -14,13 +14,10 @@ public interface ListingPostRepository extends JpaRepository<ListingPost, Long> 
 
     Iterable<ListingPost> findByUsuario_IdUsuario(Long usuarioId);
 
-    Iterable<ListingPost> findByProducto_IdProducto(Long productoId);
-
     @Query(value = "SELECT " +
            "lp.id_publicacion AS idPublicacion, " +
-           "p.id_producto AS idProducto, " +
-           "p.titulo AS titulo, " +
-           "p.descripcion AS descripcion, " +
+           "lp.titulo AS titulo, " +
+           "lp.descripcion AS descripcion, " +
            "plat.nombre AS plataformaNombre, " +
            "tipo.nombre AS tipoArticuloNombre, " +
            "lp.precio AS precio, " +
@@ -32,9 +29,8 @@ public interface ListingPostRepository extends JpaRepository<ListingPost, Long> 
            "idioma.nombre AS idiomaNombre, " +
            "lp.fecha_creacion AS fechaCreacion " +
            "FROM publicaciones lp " +
-           "LEFT JOIN productos p ON lp.id_producto = p.id_producto " +
-           "LEFT JOIN categorias plat ON p.plataforma_id = plat.id_categoria " +
-           "LEFT JOIN categorias tipo ON p.tipo_articulo_id = tipo.id_categoria " +
+           "LEFT JOIN categorias plat ON lp.plataforma_id = plat.id_categoria " +
+           "LEFT JOIN categorias tipo ON lp.tipo_articulo_id = tipo.id_categoria " +
            "LEFT JOIN categorias est ON lp.estado_articulo_id = est.id_categoria " +
            "LEFT JOIN categorias reg ON lp.region_id = reg.id_categoria " +
            "LEFT JOIN categorias idioma ON lp.idioma_id = idioma.id_categoria " +

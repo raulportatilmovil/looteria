@@ -110,7 +110,7 @@ public class TransactionService {
         TransactionDTO dto = new TransactionDTO();
         dto.setIdTransaccion(t.getIdTransaccion());
         dto.setPublicacionId(t.getPublicacion().getIdPublicacion());
-        dto.setProductoTitulo(t.getPublicacion().getProducto() != null ? t.getPublicacion().getProducto().getTitulo() : "");
+        dto.setProductoTitulo(t.getPublicacion().getTitulo() != null ? t.getPublicacion().getTitulo() : "");
         dto.setCompradorId(t.getComprador().getIdUsuario());
         dto.setCompradorNombre(t.getComprador().getNombreUsuario());
         dto.setVendedorId(t.getVendedor().getIdUsuario());

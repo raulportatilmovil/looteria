@@ -14,7 +14,7 @@ export interface UserProfile {
 
 export interface ListingItem {
   idPublicacion: number;
-  producto: string;
+  titulo: string;
   tipoTransaccion: string;
   precio: number;
   estadoPublicacion: string;
@@ -60,9 +60,10 @@ export const profileService = {
   createListing: async (userId: number, listingData: any): Promise<any> => {
     const payload = {
       userId,
-      producto: listingData.producto,
+      titulo: listingData.titulo,
       descripcion: listingData.descripcion,
       plataforma: listingData.plataforma,
+      tipoArticulo: listingData.tipoArticulo,
       tipoTransaccion: listingData.tipoTransaccion,
       precio: listingData.precio,
       estado: listingData.estado,

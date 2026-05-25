@@ -69,7 +69,6 @@ public class ListingAdminService {
                 try {
                     cloudinary.uploader().destroy(image.getPublicId(), ObjectUtils.emptyMap());
                 } catch (IOException e) {
-                    // Log error but continue with deletion
                     System.err.println("Error deleting image from Cloudinary: " + e.getMessage());
                 }
             }
@@ -110,20 +109,10 @@ public class ListingAdminService {
                 dto.setEmail("Desconocido");
             }
             
-            if (listing.getProducto() != null) {
-                dto.setTitulo(listing.getProducto().getTitulo());
-                dto.setDescripcion(listing.getProducto().getDescripcion());
-                dto.setPlataforma(listing.getProducto().getPlataforma() != null ? 
-                        listing.getProducto().getPlataforma().getNombre() : "Desconocida");
-                dto.setTipoArticulo(listing.getProducto().getTipoArticulo() != null ? 
-                        listing.getProducto().getTipoArticulo().getNombre() : "No especificado");
-                dto.setFechaLanzamiento(listing.getProducto().getFechaLanzamiento());
-            } else {
-                dto.setTitulo("Desconocido");
-                dto.setDescripcion("");
-                dto.setPlataforma("Desconocida");
-                dto.setTipoArticulo("No especificado");
-            }
+            dto.setTitulo(listing.getTitulo() != null ? listing.getTitulo() : "");
+            dto.setDescripcion(listing.getDescripcion() != null ? listing.getDescripcion() : "");
+            dto.setPlataforma(listing.getPlataforma() != null ? listing.getPlataforma().getNombre() : "Desconocida");
+            dto.setTipoArticulo(listing.getTipoArticulo() != null ? listing.getTipoArticulo().getNombre() : "No especificado");
             
             if (listing.getTipoTransaccion() != null) {
                 dto.setTipoTransaccion(listing.getTipoTransaccion().toString());

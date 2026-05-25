@@ -52,7 +52,7 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
       
       setGameData({
         id: gameId,
-        title: listingData.nombreProducto || listingData.producto || "Producto",
+        title: listingData.titulo || "Publicación",
         description: listingData.descripcion || "",
         price: listingData.precio || 0,
         console: listingData.plataforma || "",
@@ -373,7 +373,7 @@ export function GameDetailPage({ gameId, onNavigate, userRole = "guest" }: GameD
                   <span className="font-medium text-gray-900">{gameData.platform}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b border-gray-100">
-                  <span className="text-gray-600">Fecha lanzamiento:</span>
+                  <span className="text-gray-600">Fecha publicación:</span>
                   <span className="font-medium text-gray-900">{gameData.releaseDate}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b border-gray-100">

@@ -2,7 +2,6 @@ package com.looteria.dto;
 
 public interface ListingSearchProjection {
     Long getIdPublicacion();
-    Long getIdProducto();
     String getTitulo();
     String getDescripcion();
     String getPlataformaNombre();

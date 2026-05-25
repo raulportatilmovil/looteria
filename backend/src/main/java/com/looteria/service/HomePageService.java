@@ -59,11 +59,10 @@ public class HomePageService {
     private HomePageListingDTO mapToDTO(ListingPost listing) {
         HomePageListingDTO dto = new HomePageListingDTO();
         dto.setIdPublicacion(listing.getIdPublicacion());
-        dto.setIdProducto(listing.getProducto() != null ? listing.getProducto().getIdProducto() : null);
-        dto.setTitulo(listing.getProducto() != null ? listing.getProducto().getTitulo() : "");
-        dto.setDescripcion(listing.getProducto() != null ? listing.getProducto().getDescripcion() : "");
-        dto.setPlataformaNombre(listing.getProducto() != null && listing.getProducto().getPlataforma() != null ? listing.getProducto().getPlataforma().getNombre() : "");
-        dto.setTipoArticuloNombre(listing.getProducto() != null && listing.getProducto().getTipoArticulo() != null ? listing.getProducto().getTipoArticulo().getNombre() : "");
+        dto.setTitulo(listing.getTitulo() != null ? listing.getTitulo() : "");
+        dto.setDescripcion(listing.getDescripcion() != null ? listing.getDescripcion() : "");
+        dto.setPlataformaNombre(listing.getPlataforma() != null ? listing.getPlataforma().getNombre() : "");
+        dto.setTipoArticuloNombre(listing.getTipoArticulo() != null ? listing.getTipoArticulo().getNombre() : "");
         dto.setPrecio(listing.getPrecio());
         dto.setEstadoArticuloNombre(listing.getEstadoArticulo() != null ? listing.getEstadoArticulo().getNombre() : "");
         dto.setTipoTransaccion(listing.getTipoTransaccion().name());

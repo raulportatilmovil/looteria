@@ -17,7 +17,7 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const [formData, setFormData] = useState({
-    producto: "",
+    titulo: "",
     descripcion: "",
     plataforma: "PlayStation 5",
     tipoTransaccion: "VENTA",
@@ -58,7 +58,7 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
         throw new Error("Usuario no autenticado");
       }
 
-      if (!formData.producto.trim()) {
+      if (!formData.titulo.trim()) {
         throw new Error("El título es requerido");
       }
 
@@ -115,14 +115,14 @@ export function CreateListingPage({ onNavigate }: CreateListingPageProps) {
               {/* Título */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Título del artículo *
+                  Título de la publicación *
                 </label>
                 <Input
                   type="text"
-                  placeholder="p.ej. Elden Ring - PS5"
-                  value={formData.producto}
+                  placeholder="p.ej. Elden Ring - PS5 Como nuevo"
+                  value={formData.titulo}
                   onChange={(e) =>
-                    setFormData({ ...formData, producto: e.target.value })
+                    setFormData({ ...formData, titulo: e.target.value })
                   }
                   className="w-full"
                 />

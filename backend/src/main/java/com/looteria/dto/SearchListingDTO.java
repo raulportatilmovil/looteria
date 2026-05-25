@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 public class SearchListingDTO {
     
     private Long idPublicacion;
-    private Long idProducto;
     private String titulo;
     private String descripcion;
     private String plataforma;

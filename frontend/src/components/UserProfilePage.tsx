@@ -23,6 +23,7 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
   const [profileData, setProfileData] = useState({ nombreUsuario: "", ubicacion: "" });
   const [editingListing, setEditingListing] = useState<any>(null);
   const [editListingData, setEditListingData] = useState({
+    titulo: "",
     descripcionEstado: "",
     precio: "",
     tipoTransaccion: "VENTA",
@@ -190,6 +191,7 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
       setEditingImages([]);
     }
     setEditListingData({
+      titulo: listing.titulo || "",
       descripcionEstado: listing.descripcionEstado || "",
       precio: listing.precio?.toString() || "",
       tipoTransaccion: listing.tipoTransaccion || "VENTA",
@@ -237,6 +239,7 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
       setNewImageFiles([]);
       setNewImagePreviews([]);
       const updated = await profileService.updateListing(editingListing.idPublicacion, {
+        titulo: editListingData.titulo,
         descripcionEstado: editListingData.descripcionEstado,
         precio: editListingData.precio,
         tipoTransaccion: editListingData.tipoTransaccion,
@@ -249,6 +252,7 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
       setMyListings(myListings.map(l =>
         l.idPublicacion === editingListing.idPublicacion
           ? { ...l, ...(updated || {}),
+              titulo: editListingData.titulo,
               descripcionEstado: editListingData.descripcionEstado,
               precio: parseFloat(editListingData.precio),
               tipoTransaccion: editListingData.tipoTransaccion,
@@ -424,8 +428,19 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-6">Editar publicación</h2>
-            <p className="text-gray-600 text-sm mb-4 font-medium">{editingListing.titulo || editingListing.producto}</p>
             <div className="space-y-4">
+
+              {/* Título */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Título de la publicación</label>
+                <input
+                  type="text"
+                  value={editListingData.titulo}
+                  onChange={(e) => setEditListingData({ ...editListingData, titulo: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Título de la publicación"
+                />
+              </div>
 
               {/* Tipo de transacción */}
               <div>
@@ -728,7 +743,7 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
                         {listing.imagenes && listing.imagenes.length > 0 ? (
                           <img
                             src={listing.imagenes[0].startsWith("/") ? `${import.meta.env.VITE_API_URL}${listing.imagenes[0]}` : listing.imagenes[0]}
-                            alt={listing.producto}
+                            alt={listing.titulo}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -739,7 +754,7 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                              {listing.producto}
+                              {listing.titulo}
                             </h3>
                             <p className="text-gray-600 text-sm">
                               {listing.tipoTransaccion}
@@ -757,7 +772,6 @@ export function UserProfilePage({ onNavigate, userRole: _userRole = "registered"
                           <span className="text-2xl font-bold text-primary">{listing.precio}€</span>
                           <span>{new Date(listing.fechaCreacion.split('T')[0]).toLocaleDateString('es-ES')}</span>
                         </div>
-                        <p className="text-gray-600 text-sm mb-4">{listing.descripcionEstado}</p>
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
