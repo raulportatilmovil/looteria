@@ -1,5 +1,7 @@
 package com.looteria.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.looteria.dto.ListingDetailDTO;
 import com.looteria.entity.Image;
 import com.looteria.entity.ListingPost;
@@ -8,6 +10,7 @@ import com.looteria.repository.ListingPostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +25,9 @@ public class ListingAdminService {
 
     @Autowired
     private ImageRepository imageRepository;
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     /**
      * Obtener todas las publicaciones 
@@ -52,8 +58,23 @@ public class ListingAdminService {
     /**
      * Eliminar publicación por ID
      */
-    public void deleteListing(Long id) {
-        listingPostRepository.deleteById(id);
+    public void deleteListing(Long id) throws IOException {
+        ListingPost listing = listingPostRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Publicación no encontrada"));
+        
+        // Eliminar imágenes de Cloudinary
+        List<Image> images = (List<Image>) imageRepository.findByPublicacion_IdPublicacion(id);
+        for (Image image : images) {
+            if (image.getPublicId() != null) {
+                cloudinary.uploader().destroy(image.getPublicId(), ObjectUtils.emptyMap());
+            }
+        }
+        
+        // Eliminar imágenes de la base de datos
+        imageRepository.deleteAll(images);
+        
+        // Eliminar publicación
+        listingPostRepository.delete(listing);
     }
 
     /**
