@@ -60,17 +60,17 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
   // Filtrar publicaciones
   const filteredGames = allListings
     .filter((listing) => {
-      const matchesSearch = listing.titulo
+      const matchesSearch = (listing.titulo || "")
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
       const matchesPlatform =
         !filters.platform ||
-        listing.plataforma.toLowerCase().includes(filters.platform.toLowerCase());
+        (listing.plataforma || "").toLowerCase().includes(filters.platform.toLowerCase());
 
       const matchesCondition =
         !filters.condition ||
-        listing.estadoArticulo.toLowerCase().includes(filters.condition.toLowerCase());
+        (listing.estadoArticulo || "").toLowerCase().includes(filters.condition.toLowerCase());
 
       const matchesTransactionType =
         !filters.transactionType ||
@@ -78,7 +78,7 @@ export function ExplorePage({ onNavigate }: ExplorePageProps) {
 
       const matchesRegion =
         !filters.region ||
-        listing.region.toLowerCase().includes(filters.region.toLowerCase());
+        (listing.region || "").toLowerCase().includes(filters.region.toLowerCase());
 
       const matchesPrice =
         !filters.priceRange ||
