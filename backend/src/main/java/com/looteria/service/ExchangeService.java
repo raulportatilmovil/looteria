@@ -93,6 +93,7 @@ public class ExchangeService {
         return mapToDTO(exchangeRepository.save(exchange));
     }
 
+    // ─── Marcar intercambio como completado (ambos usuarios deben confirmar) ───
     @Transactional
     public ExchangeDTO marcarCompletado(Long exchangeId, Long userId) {
         Exchange exchange = exchangeRepository.findById(exchangeId)
